@@ -125,17 +125,20 @@ export const CustomersPage: React.FC = () => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
+  const clientsLabel = user?.crmCustomization?.clientsLabel || 'Clients';
+  const singularClient = clientsLabel.endsWith('s') ? clientsLabel.slice(0, -1) : clientsLabel;
+
   return (
     <WorkspaceLayout
-      title="Customers"
-      subtitle="Manage your persistent enterprise customer relationships and account records"
+      title={`${clientsLabel} Directory`}
+      subtitle={`Manage your persistent ${clientsLabel.toLowerCase()} relationships and company account records`}
       actions={
         <button
           onClick={handleOpenAdd}
           className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#FAF6F0] bg-[#0D2218] hover:bg-[#163827] rounded-xl shadow-xs transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Customer</span>
+          <span>Add {singularClient}</span>
         </button>
       }
     >
@@ -302,7 +305,7 @@ export const CustomersPage: React.FC = () => {
           <div className="bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/15 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in">
             <div className="p-4 bg-white border-b border-[#0D2218]/10 flex items-center justify-between">
               <h3 className="font-serif text-lg font-bold text-[#0D2218]">
-                {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
+                {editingCustomer ? `Edit ${singularClient}` : `Add New ${singularClient}`}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -316,7 +319,7 @@ export const CustomersPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-[#0D2218] mb-1">
-                    Customer Name *
+                    {singularClient} Name *
                   </label>
                   <input
                     type="text"

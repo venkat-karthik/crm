@@ -15,7 +15,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { auth, googleProvider, firestoreDb, handleFirestoreError, OperationType } from '../services/firebase';
-import { db, User } from '../services/db';
+import { db, User, MASTER_FOUNDER_EMAIL, isMasterFounder } from '../services/db';
 
 interface AuthContextType {
   user: User | null;
@@ -56,6 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         handleFirestoreError(err, OperationType.GET, `users/${fbUser.uid}`);
       }
 
+      const isMaster = isMasterFounder(fbUser.email);
+
       if (snap && snap.exists()) {
         const firestoreData = snap.data() as User;
         const mergedUser: User = {
@@ -63,8 +65,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: fbUser.uid,
           email: fbUser.email || firestoreData.email,
           name: firestoreData.name || fbUser.displayName || 'Business User',
+          role: isMaster ? 'Founder' : (firestoreData.role === 'Founder' ? 'Manager' : firestoreData.role || 'Sales Employee'),
+          company: isMaster ? (firestoreData.company || 'Kairoo Technologies Global') : (firestoreData.company || fallbackCompany || 'My Business Organization'),
           tenantId: firestoreData.tenantId || fbUser.uid,
-          plan: firestoreData.plan || 'growth',
+          plan: isMaster ? 'enterprise' : (firestoreData.plan || 'growth'),
+          subscriptionStatus: isMaster ? 'active' : (firestoreData.subscriptionStatus || 'active'),
         };
         setUser(mergedUser);
         db.setCurrentUser(mergedUser);
@@ -74,12 +79,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newUser: User = {
           id: fbUser.uid,
           email: fbUser.email || 'user@kairoo.com',
-          name: fallbackName || fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : 'Business Owner'),
-          role: 'Admin',
-          company: fallbackCompany || 'My Business Organization',
+          name: fallbackName || fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : (isMaster ? 'Karthik Venkat' : 'Business User')),
+          role: isMaster ? 'Founder' : 'Sales Employee',
+          company: isMaster ? 'Kairoo Technologies Global' : (fallbackCompany || 'My Business Organization'),
           status: 'Active',
           tenantId: fbUser.uid,
-          plan: 'growth',
+          plan: isMaster ? 'enterprise' : 'growth',
           planBillingCycle: 'monthly',
           subscriptionStatus: 'active',
           createdAt: new Date().toISOString(),
@@ -97,15 +102,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.warn('Firestore sync failed, utilizing local authenticated session:', error);
+      const isMaster = isMasterFounder(fbUser.email);
       const fallbackUser: User = {
         id: fbUser.uid,
         email: fbUser.email || 'user@kairoo.com',
-        name: fallbackName || fbUser.displayName || 'Business Owner',
-        role: 'Admin',
-        company: fallbackCompany || 'My Business Organization',
+        name: fallbackName || fbUser.displayName || (isMaster ? 'Karthik Venkat' : 'Business User'),
+        role: isMaster ? 'Founder' : 'Sales Employee',
+        company: isMaster ? 'Kairoo Technologies Global' : (fallbackCompany || 'My Business Organization'),
         status: 'Active',
         tenantId: fbUser.uid,
-        plan: 'growth',
+        plan: isMaster ? 'enterprise' : 'growth',
         planBillingCycle: 'monthly',
         subscriptionStatus: 'active',
         createdAt: new Date().toISOString(),
@@ -182,6 +188,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('This user account has been disabled by an administrator.');
       }
 
+      if (isMasterFounder(found.email)) {
+        found.role = 'Founder';
+        found.plan = 'enterprise';
+        found.subscriptionStatus = 'active';
+      }
+
       db.setCurrentUser(found);
       setUser(found);
       return true;
@@ -195,16 +207,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password?: string,
     company?: string,
-    role: User['role'] = 'Admin',
+    role: User['role'] = 'Sales Employee',
     plan: 'starter' | 'growth' | 'enterprise' = 'growth'
   ): Promise<User> => {
     setIsLoading(true);
     try {
+      const isMaster = isMasterFounder(email);
+      const assignedRole: User['role'] = isMaster ? 'Founder' : (role === 'Founder' ? 'Manager' : role);
+      const assignedPlan = isMaster ? 'enterprise' : plan;
+      const assignedCompany = isMaster ? (company || 'Kairoo Technologies Global') : (company || 'My Business Organization');
+
       if (password) {
         try {
           const cred = await createUserWithEmailAndPassword(auth, email, password);
           if (cred.user) {
-            const u = await syncFirestoreProfile(cred.user, name, company);
+            const u = await syncFirestoreProfile(cred.user, name, assignedCompany);
             return u;
           }
         } catch (fbErr: any) {
@@ -215,10 +232,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newUser = db.saveUser({
         name,
         email,
-        company: company || 'My Business Organization',
-        role,
+        company: assignedCompany,
+        role: assignedRole,
         status: 'Active',
-        plan,
+        plan: assignedPlan,
         tenantId: 'tenant_' + Date.now(),
         subscriptionStatus: 'active',
       });

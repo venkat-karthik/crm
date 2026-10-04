@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
-import { db, User } from '../services/db';
+import { db, User, Organization, isMasterFounder, MASTER_FOUNDER_EMAIL } from '../services/db';
 import { useAuth } from '../context/AuthContext';
 import {
   Plus,
@@ -23,7 +23,6 @@ import {
   ExternalLink,
   ShieldAlert,
 } from 'lucide-react';
-import { Organization } from '../services/db';
 
 const ROLES: User['role'][] = [
   'Founder',
@@ -43,7 +42,9 @@ export const UsersPage: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
   const [copiedType, setCopiedType] = useState<string | null>(null);
 
-  const isFounderOrManager = currentUser?.role === 'Founder' || currentUser?.role === 'Manager' || currentUser?.role === 'Admin' || currentUser?.role === 'Owner';
+  const isMaster = isMasterFounder(currentUser);
+  const isFounder = isMaster || currentUser?.role === 'Founder';
+  const isFounderOrManager = isFounder || currentUser?.role === 'Manager' || currentUser?.role === 'Admin' || currentUser?.role === 'Owner';
 
   let org: Organization | null = null;
   if (currentUser?.organizationId) {
@@ -52,7 +53,7 @@ export const UsersPage: React.FC = () => {
   if (!org && currentUser?.tenantId) {
     org = db.getOrganization(currentUser.tenantId);
   }
-  if (!org && currentUser && isFounderOrManager) {
+  if (!org && currentUser && isFounder) {
     org = db.createOrganizationWithCodes({
       name: currentUser.company || `${currentUser.name}'s Organization`,
       founderId: currentUser.id,
@@ -176,19 +177,19 @@ export const UsersPage: React.FC = () => {
     return matchSearch && matchRole;
   });
 
-  if (!isFounderOrManager) {
+  if (!isFounder) {
     return (
       <WorkspaceLayout
         title="Access Restricted"
-        subtitle="Team and member management is reserved for Founders and Managers"
+        subtitle="Team and member management is reserved exclusively for the CRM Founder"
       >
         <div className="bg-white p-8 rounded-3xl border border-[#0D2218]/10 text-center max-w-lg mx-auto my-12 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
             <ShieldAlert className="w-7 h-7" />
           </div>
-          <h3 className="text-xl font-extrabold text-[#0D2218]">Executive Permission Required</h3>
+          <h3 className="text-xl font-extrabold text-[#0D2218]">Founder Permission Required</h3>
           <p className="text-xs text-[#5C6862] mt-2 leading-relaxed">
-            Team user management and invitation codes are strictly confidential and visible only to the organization Founder or Manager.
+            Team user management and invitation codes are strictly confidential and visible only to the CRM Founder ({MASTER_FOUNDER_EMAIL}).
           </p>
         </div>
       </WorkspaceLayout>

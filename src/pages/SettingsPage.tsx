@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
-import { db } from '../services/db';
 import { useAuth } from '../context/AuthContext';
 import { usePlanAccess } from '../hooks/usePlanAccess';
 import { RazorpayModal } from '../components/RazorpayModal';
@@ -22,7 +21,13 @@ import {
   ShieldCheck,
   Check,
   FileText,
+  Cloud,
+  UploadCloud,
+  RefreshCw,
 } from 'lucide-react';
+import { db, isMasterFounder, MASTER_FOUNDER_EMAIL } from '../services/db';
+import { CloudinaryMediaManager } from '../components/CloudinaryMediaManager';
+import { cloudinaryService } from '../services/cloudinary';
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth();
@@ -39,10 +44,46 @@ export const SettingsPage: React.FC = () => {
   const [savedToast, setSavedToast] = useState(false);
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
 
+  // Dynamic Adaptive CRM Customization states from Registration
+  const [clientsLabel, setClientsLabel] = useState(user?.crmCustomization?.clientsLabel || 'Clients');
+  const [dealsLabel, setDealsLabel] = useState(user?.crmCustomization?.dealsLabel || 'Projects');
+  const [crmType, setCrmType] = useState<any>(user?.crmCustomization?.crmType || 'agency');
+  const [collaborationMode, setCollaborationMode] = useState<any>(user?.crmCustomization?.collaborationMode || 'both');
+
   const handleSavePreferences = (e: React.FormEvent) => {
     e.preventDefault();
+    if (user) {
+      const updatedUser = {
+        ...user,
+        company: companyName,
+        crmCustomization: {
+          crmType,
+          collaborationMode,
+          clientsLabel,
+          dealsLabel,
+        },
+      };
+      db.saveUser(updatedUser);
+      db.setCurrentUser(updatedUser);
+      if (user.organizationId) {
+        const org = db.getOrganization(user.organizationId);
+        if (org) {
+          org.name = companyName;
+          org.crmType = crmType;
+          org.collaborationMode = collaborationMode;
+          org.customTerminology = {
+            clientsLabel,
+            dealsLabel,
+          };
+          db.saveOrganization(org);
+        }
+      }
+    }
     setSavedToast(true);
-    setTimeout(() => setSavedToast(false), 3000);
+    setTimeout(() => {
+      setSavedToast(false);
+      window.location.reload();
+    }, 1200);
   };
 
   const handleDownloadInvoice = () => {
@@ -97,10 +138,33 @@ Thank you for powering your business with Kairoo!`;
     dlAnchor.remove();
   };
 
+  const isMaster = isMasterFounder(user);
+  const [showCloudinaryModal, setShowCloudinaryModal] = useState(false);
+  const [syncingCld, setSyncingCld] = useState(false);
+  const [cldToast, setCldToast] = useState<string | null>(null);
+
+  const handleSyncCrmPhotos = async () => {
+    setSyncingCld(true);
+    setCldToast(null);
+    try {
+      await cloudinaryService.syncLocalPhotosToCloudinary();
+      setCldToast('All 4 CRM showcase photos successfully uploaded and synchronized with Cloudinary CDN!');
+      setTimeout(() => setCldToast(null), 4000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSyncingCld(false);
+    }
+  };
+
   const handleResetData = () => {
-    if (confirm('Are you sure you want to reset all records to the default seed state? Current edits will be re-initialized.')) {
+    if (!isMaster) {
+      alert(`Database purge and clean slate reset is reserved exclusively for the CRM Founder (${MASTER_FOUNDER_EMAIL}).`);
+      return;
+    }
+    if (confirm('Are you sure you want to purge all records? This will clear all data and prepare a 100% clean slate for your new Founder account.')) {
       localStorage.clear();
-      window.location.reload();
+      window.location.href = '/signup';
     }
   };
 
@@ -316,6 +380,76 @@ Thank you for powering your business with Kairoo!`;
 
           <hr className="border-[#0D2218]/8" />
 
+          {/* Adaptive CRM Customization & Terminology Calibration */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-extrabold text-[#0D2218] flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#BA5D38]" />
+                <span>Adaptive CRM Intelligence & Terminology</span>
+              </h3>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#BA5D38]/10 text-[#BA5D38] border border-[#BA5D38]/20">
+                Self-Adapting Engine
+              </span>
+            </div>
+            <p className="text-xs font-medium text-[#5C6862]">
+              Calibrated dynamically from your registration survey. Adjusting here will automatically transform directory labels, pipeline boards, and portals across your entire workspace in real time.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label className="block font-bold mb-1 text-[#0D2218]">Customer Entity Label</label>
+              <select
+                value={clientsLabel}
+                onChange={(e) => setClientsLabel(e.target.value)}
+                className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/12 rounded-xl text-[#0D2218] font-medium"
+              >
+                <option value="Clients">"Clients" (Agencies & Creative Studios)</option>
+                <option value="Customers">"Customers" (B2B Sales & High-Ticket)</option>
+                <option value="Accounts">"Accounts" (Enterprise SaaS & Tech)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold mb-1 text-[#0D2218]">Pipeline Deal Label</label>
+              <select
+                value={dealsLabel}
+                onChange={(e) => setDealsLabel(e.target.value)}
+                className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/12 rounded-xl text-[#0D2218] font-medium"
+              >
+                <option value="Projects">"Projects" (Milestones & Deliverables)</option>
+                <option value="Deals">"Deals" (Monetary Sales Pipeline)</option>
+                <option value="Contracts">"Contracts" (Retainers & Agreements)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold mb-1 text-[#0D2218]">Operational CRM Mode</label>
+              <select
+                value={crmType}
+                onChange={(e) => setCrmType(e.target.value as any)}
+                className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/12 rounded-xl text-[#0D2218] font-medium"
+              >
+                <option value="agency">Agency Delivery (Client milestone & retainer focus)</option>
+                <option value="sales_b2b">B2B Sales (High-velocity deal progression)</option>
+                <option value="services">Consulting Hub (Contract & advisory workflow)</option>
+                <option value="hybrid">Enterprise Hybrid (Complete 360-degree suite)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold mb-1 text-[#0D2218]">Collaboration Model</label>
+              <select
+                value={collaborationMode}
+                onChange={(e) => setCollaborationMode(e.target.value as any)}
+                className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/12 rounded-xl text-[#0D2218] font-medium"
+              >
+                <option value="both">Both Team Employees & External Clients</option>
+                <option value="employees_only">Internal Team Employees Only</option>
+                <option value="clients_only">External Clients & Customers Only</option>
+              </select>
+            </div>
+          </div>
+
+          <hr className="border-[#0D2218]/8" />
+
           {/* Notifications Rules */}
           <div>
             <h3 className="text-sm font-extrabold text-[#0D2218] flex items-center gap-2 mb-1">
@@ -366,6 +500,71 @@ Thank you for powering your business with Kairoo!`;
           </div>
         </form>
 
+        {/* Cloudinary CDN & Media Asset Storage Card */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#0D2218]/10 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#3448C5]/10 text-[#3448C5] mb-2">
+                <Cloud className="w-3.5 h-3.5 fill-current" />
+                Cloudinary CDN & Image Storage
+              </div>
+              <h3 className="text-sm font-extrabold text-[#0D2218] flex items-center gap-2">
+                <span>Media Delivery, Dynamic Transformations & Auto-WebP</span>
+              </h3>
+              <p className="text-xs font-medium text-[#5C6862] mt-0.5">
+                Connected Cloudinary cloud: <span className="font-mono text-[#0D2218] font-bold">kairoo-crm</span> with real-time compression, format negotiation, and CDN edge delivery.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSyncCrmPhotos}
+                disabled={syncingCld}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#FAF6F0] hover:bg-[#0D2218] hover:text-white text-[#0D2218] border border-[#0D2218]/15 text-xs font-extrabold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncingCld ? 'animate-spin' : ''}`} />
+                <span>{syncingCld ? 'Uploading...' : 'Sync CRM Photos'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowCloudinaryModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0D2218] hover:bg-[#163827] text-white text-xs font-extrabold rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer"
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>Open Media Gallery</span>
+              </button>
+            </div>
+          </div>
+
+          {cldToast && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold rounded-xl flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{cldToast}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            <div className="p-3 bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/10 text-center">
+              <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">Cloud Account</span>
+              <span className="text-xs font-mono font-extrabold text-[#0D2218]">kairoo-crm</span>
+            </div>
+            <div className="p-3 bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/10 text-center">
+              <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">Auto Format</span>
+              <span className="text-xs font-mono font-extrabold text-emerald-600">f_auto (WebP/AVIF)</span>
+            </div>
+            <div className="p-3 bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/10 text-center">
+              <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">Compression</span>
+              <span className="text-xs font-mono font-extrabold text-blue-600">q_auto (Lossless/Smart)</span>
+            </div>
+            <div className="p-3 bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/10 text-center">
+              <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">CDN Security</span>
+              <span className="text-xs font-mono font-extrabold text-[#BA5D38]">HTTPS SSL Signed</span>
+            </div>
+          </div>
+        </div>
+
         {/* Database Management & Backups */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#0D2218]/10 shadow-xs space-y-4">
           <div>
@@ -414,9 +613,9 @@ Thank you for powering your business with Kairoo!`;
 
           <div className="p-4 rounded-2xl bg-red-50/50 border border-red-200/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-extrabold text-red-900 block">Reset to Factory Seed State</span>
+              <span className="text-xs font-extrabold text-red-900 block">Purge & Reset to Clean Database Slate</span>
               <span className="text-[11px] text-red-700/80 font-medium">
-                Restores standard demo companies (TechNova, Sovereign Capital, Studio Lumina).
+                Purges all local caches and stored sessions for a 100% clean database slate. (Reserved for CRM Founder {MASTER_FOUNDER_EMAIL}).
               </span>
             </div>
             <button
@@ -424,7 +623,7 @@ Thank you for powering your business with Kairoo!`;
               className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-xs font-extrabold text-red-900 rounded-xl transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Demo Store</span>
+              <span>Purge All Data</span>
             </button>
           </div>
         </div>
@@ -434,6 +633,11 @@ Thank you for powering your business with Kairoo!`;
         isOpen={showRazorpayModal}
         onClose={() => setShowRazorpayModal(false)}
         defaultPlan={currentPlan === 'starter' ? 'growth' : 'enterprise'}
+      />
+
+      <CloudinaryMediaManager
+        isOpen={showCloudinaryModal}
+        onClose={() => setShowCloudinaryModal(false)}
       />
     </WorkspaceLayout>
   );

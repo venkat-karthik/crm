@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { KairooLogo } from '../components/KairooLogo';
 import { useAuth } from '../context/AuthContext';
-import { db, Organization, User as UserType } from '../services/db';
+import { db, Organization, User as UserType, MASTER_FOUNDER_EMAIL, isMasterFounder } from '../services/db';
 import { SAAS_PLANS, PlanTier } from '../services/razorpay';
 import {
   ArrowRight,
@@ -107,14 +107,18 @@ export const SignupPage: React.FC = () => {
         plan: selectedPlan,
       });
 
-      // 2. Register user as Founder/Manager & bind to organization
+      const isMaster = isMasterFounder(founderEmail);
+      const effectiveRole: UserType['role'] = isMaster ? 'Founder' : 'Manager';
+      const effectivePlan = isMaster ? 'enterprise' : selectedPlan;
+
+      // 2. Register user & bind to organization
       const user = await signup(
         founderName,
         founderEmail,
         founderPassword,
         companyName,
-        founderRole,
-        selectedPlan
+        effectiveRole,
+        effectivePlan
       );
 
       // Update org founder ID
@@ -124,7 +128,8 @@ export const SignupPage: React.FC = () => {
       // Update user with organization details
       user.organizationId = org.id;
       user.tenantId = org.id;
-      user.role = founderRole;
+      user.role = effectiveRole;
+      user.plan = effectivePlan;
       user.crmCustomization = {
         crmType: org.crmType,
         collaborationMode: org.collaborationMode,
@@ -155,6 +160,10 @@ export const SignupPage: React.FC = () => {
     try {
       const googleUser = await signInWithGoogle();
       if (googleUser) {
+        const isMaster = isMasterFounder(googleUser.email);
+        const effectiveRole: UserType['role'] = isMaster ? 'Founder' : 'Manager';
+        const effectivePlan = isMaster ? 'enterprise' : selectedPlan;
+
         // Create organization & bind
         const org = db.createOrganizationWithCodes({
           name: companyName,
@@ -166,10 +175,11 @@ export const SignupPage: React.FC = () => {
           collaborationMode,
           clientsLabel,
           dealsLabel,
-          plan: selectedPlan,
+          plan: effectivePlan,
         });
 
-        googleUser.role = founderRole;
+        googleUser.role = effectiveRole;
+        googleUser.plan = effectivePlan;
         googleUser.company = companyName;
         googleUser.organizationId = org.id;
         googleUser.tenantId = org.id;
@@ -451,7 +461,26 @@ export const SignupPage: React.FC = () => {
                       ].map((ind) => (
                         <div
                           key={ind.title}
-                          onClick={() => setIndustry(ind.title)}
+                          onClick={() => {
+                            setIndustry(ind.title);
+                            if (ind.title.includes('Agency')) {
+                              setCollaborationMode('both');
+                              setClientsLabel('Clients');
+                              setDealsLabel('Projects');
+                            } else if (ind.title.includes('B2B Sales')) {
+                              setCollaborationMode('employees_only');
+                              setClientsLabel('Customers');
+                              setDealsLabel('Deals');
+                            } else if (ind.title.includes('Consulting')) {
+                              setCollaborationMode('both');
+                              setClientsLabel('Clients');
+                              setDealsLabel('Contracts');
+                            } else if (ind.title.includes('Tech, SaaS')) {
+                              setCollaborationMode('both');
+                              setClientsLabel('Accounts');
+                              setDealsLabel('Projects');
+                            }
+                          }}
                           className={`p-3 rounded-2xl border-2 cursor-pointer transition-all ${
                             industry === ind.title
                               ? 'border-[#0D2218] bg-[#FAF6F0] ring-2 ring-[#0D2218]/10'
@@ -551,6 +580,35 @@ export const SignupPage: React.FC = () => {
                         <option value="Deals">"Deals" (Monetary Sales Pipeline)</option>
                         <option value="Contracts">"Contracts" (Legal / Consulting)</option>
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Real-time CRM Self-Adaptation Preview */}
+                  <div className="p-4 rounded-2xl bg-[#0D2218]/5 border border-[#0D2218]/12 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#BA5D38]" />
+                      <span className="text-xs font-extrabold text-[#0D2218]">
+                        Real-Time CRM Self-Adaptation Preview
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#5C6862] leading-snug">
+                      Based on your answers, Kairoo is automatically calibrating:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                      <div className="p-2.5 bg-white rounded-xl border border-[#0D2218]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#5C6862] block">Directory View</span>
+                        <span className="font-extrabold text-[#0D2218]">{clientsLabel} Directory</span>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-xl border border-[#0D2218]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#5C6862] block">Pipeline View</span>
+                        <span className="font-extrabold text-[#0D2218]">{dealsLabel} Board</span>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-xl border border-[#0D2218]/10">
+                        <span className="text-[10px] uppercase font-bold text-[#5C6862] block">Invites Generated</span>
+                        <span className="font-extrabold text-[#BA5D38]">
+                          {collaborationMode === 'both' ? 'Employee & Client' : collaborationMode === 'employees_only' ? 'Employee Only' : 'Client Only'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

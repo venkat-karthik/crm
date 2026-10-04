@@ -217,12 +217,18 @@ function setStored<T>(key: string, value: T) {
   }
 }
 
-// FRESH INITIAL STATE (Zero Dummy Data - Enterprise Clean Slate)
+// MASTER FOUNDER EMAIL - Holds ultimate administrative ownership and access across all features
+export const MASTER_FOUNDER_EMAIL = 'karthikvenkat316@gmail.com';
+
+// FRESH INITIAL STATE (Zero Dummy Data - Clean Slate for Master Founder)
 function initializeData() {
-  const CURRENT_DB_VERSION = 'kairoo_enterprise_v3_clean';
+  const CURRENT_DB_VERSION = 'kairoo_master_v7_karthik_clean';
   const hasInitialized = localStorage.getItem('kairoo_db_version');
   if (hasInitialized !== CURRENT_DB_VERSION) {
-    // Clean slate: remove any legacy mock/dummy items
+    // Purge all legacy sessions, users, and data for completely fresh start
+    localStorage.removeItem('kairoo_current_user');
+    localStorage.removeItem('kairoo_crm_users');
+    localStorage.removeItem('kairoo_crm_organizations');
     localStorage.removeItem('kairoo_crm_customers');
     localStorage.removeItem('kairoo_crm_leads');
     localStorage.removeItem('kairoo_crm_deals');
@@ -234,11 +240,16 @@ function initializeData() {
     localStorage.removeItem('kairoo_crm_ticket_messages');
     localStorage.removeItem('kairoo_crm_activity_logs');
     localStorage.removeItem('kairoo_crm_notifications');
-    // Only keep real registered organizations and users if valid, otherwise clean
     localStorage.setItem('kairoo_db_version', CURRENT_DB_VERSION);
   }
 }
 initializeData();
+
+export function isMasterFounder(userOrEmail?: User | string | null): boolean {
+  if (!userOrEmail) return false;
+  const email = typeof userOrEmail === 'string' ? userOrEmail : userOrEmail.email;
+  return !!email && email.trim().toLowerCase() === MASTER_FOUNDER_EMAIL.toLowerCase();
+}
 
 function generateCode(prefix: string, name: string): string {
   const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'KAI';
@@ -253,7 +264,14 @@ export const db = {
     const raw = localStorage.getItem('kairoo_current_user');
     if (raw) {
       try {
-        return JSON.parse(raw);
+        const u = JSON.parse(raw) as User;
+        // If master founder, enforce enterprise tier and full executive permissions
+        if (u.email && u.email.toLowerCase() === MASTER_FOUNDER_EMAIL.toLowerCase()) {
+          u.role = 'Founder';
+          u.plan = 'enterprise';
+          u.subscriptionStatus = 'active';
+        }
+        return u;
       } catch {
         return null;
       }
@@ -263,6 +281,12 @@ export const db = {
 
   setCurrentUser(user: User | null) {
     if (user) {
+      if (user.email && user.email.toLowerCase() === MASTER_FOUNDER_EMAIL.toLowerCase()) {
+        user.role = 'Founder';
+        user.plan = 'enterprise';
+        user.subscriptionStatus = 'active';
+        user.company = user.company || 'Kairoo Technologies Global';
+      }
       localStorage.setItem('kairoo_current_user', JSON.stringify(user));
     } else {
       localStorage.removeItem('kairoo_current_user');
@@ -366,10 +390,24 @@ export const db = {
 
   saveUser(user: Partial<User> & { name: string; email: string }): User {
     const list = getStored<User[]>('users', []);
+    const isMaster = isMasterFounder(user.email);
+    const assignedRole: User['role'] = isMaster
+      ? 'Founder'
+      : user.role === 'Founder'
+      ? 'Manager'
+      : user.role || 'Sales Employee';
+    const assignedPlan = isMaster ? 'enterprise' : user.plan || 'growth';
+
     if (user.id) {
       const idx = list.findIndex((u) => u.id === user.id);
       if (idx !== -1) {
-        list[idx] = { ...list[idx], ...user };
+        list[idx] = {
+          ...list[idx],
+          ...user,
+          role: assignedRole,
+          plan: assignedPlan,
+          subscriptionStatus: isMaster ? 'active' : (user.subscriptionStatus || list[idx].subscriptionStatus || 'active'),
+        };
         setStored('users', list);
         return list[idx];
       }
@@ -378,16 +416,16 @@ export const db = {
       id: user.id || `usr_${Date.now()}`,
       name: user.name,
       email: user.email,
-      role: user.role || 'Founder',
-      department: user.department || 'Executive',
+      role: assignedRole,
+      department: user.department || (isMaster ? 'Executive' : 'Operations'),
       status: user.status || 'Active',
-      company: user.company || 'My Organization',
+      company: user.company || (isMaster ? 'Kairoo Technologies Global' : 'My Organization'),
       tenantId: user.tenantId || user.id || `usr_${Date.now()}`,
       organizationId: user.organizationId,
       inviteCodeUsed: user.inviteCodeUsed,
-      plan: user.plan || 'growth',
+      plan: assignedPlan,
       planBillingCycle: user.planBillingCycle || 'monthly',
-      subscriptionStatus: user.subscriptionStatus || 'active',
+      subscriptionStatus: isMaster ? 'active' : (user.subscriptionStatus || 'active'),
       crmCustomization: user.crmCustomization,
       createdAt: user.createdAt || new Date().toISOString(),
     };

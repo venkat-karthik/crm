@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
-import { db, Customer, Deal, Task, Ticket, Organization } from '../services/db';
+import { db, Customer, Deal, Task, Ticket, Organization, isMasterFounder, MASTER_FOUNDER_EMAIL } from '../services/db';
 import { useAuth } from '../context/AuthContext';
 import { InviteManagerModal } from '../components/InviteManagerModal';
 import {
@@ -39,10 +39,11 @@ export const DashboardPage: React.FC = () => {
   const [tickets, setTickets] = useState(db.getTickets());
   const [showInviteModal, setShowInviteModal] = useState(false);
 
-  // Role detection
+  // Role detection - Only karthikvenkat316@gmail.com is Master Founder with all executive features
+  const isMaster = isMasterFounder(user);
   const isClient = user?.role === 'Client';
-  const isEmployee = user?.role === 'Employee' || user?.role === 'Sales Employee' || user?.role === 'Support Employee';
-  const isFounder = !isClient && !isEmployee;
+  const isFounder = isMaster || user?.role === 'Founder';
+  const isEmployee = !isClient && !isFounder;
 
   // Custom terminology
   const clientsLabel = user?.crmCustomization?.clientsLabel || 'Customers';

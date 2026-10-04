@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
-import { db } from '../services/db';
+import { db, isMasterFounder, MASTER_FOUNDER_EMAIL } from '../services/db';
 import {
   Sparkles,
   TrendingUp,
@@ -24,7 +24,8 @@ export const AIInsightsPage: React.FC = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisTimestamp, setAnalysisTimestamp] = useState(new Date().toLocaleTimeString());
 
-  const isFounderOrManager = user?.role === 'Founder' || user?.role === 'Manager' || user?.role === 'Admin' || user?.role === 'Owner';
+  const isMaster = isMasterFounder(user);
+  const isFounder = isMaster || user?.role === 'Founder';
 
   const handleRunAnalysis = () => {
     setAnalyzing(true);
@@ -39,19 +40,19 @@ export const AIInsightsPage: React.FC = () => {
     }, 900);
   };
 
-  if (!isFounderOrManager) {
+  if (!isFounder) {
     return (
       <WorkspaceLayout
         title="Access Restricted"
-        subtitle="AI Insights and executive predictive scoring are reserved for Founders and Managers"
+        subtitle="AI Insights and executive predictive scoring are reserved exclusively for the CRM Founder"
       >
         <div className="bg-white p-8 rounded-3xl border border-[#0D2218]/10 text-center max-w-lg mx-auto my-12 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
             <ShieldAlert className="w-7 h-7" />
           </div>
-          <h3 className="text-xl font-extrabold text-[#0D2218]">Executive Permission Required</h3>
+          <h3 className="text-xl font-extrabold text-[#0D2218]">Founder Permission Required</h3>
           <p className="text-xs text-[#5C6862] mt-2 leading-relaxed">
-            Neural pipeline win prediction and automated company-wide deal audits are confidential to leadership. Please review your assigned tasks or client portal.
+            Neural pipeline win prediction and automated company-wide deal audits are confidential to the CRM Founder ({MASTER_FOUNDER_EMAIL}).
           </p>
         </div>
       </WorkspaceLayout>

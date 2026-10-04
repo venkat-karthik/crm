@@ -167,17 +167,20 @@ export const PipelinePage: React.FC = () => {
     return matchSearch && matchRep;
   });
 
+  const dealsLabel = user?.crmCustomization?.dealsLabel || 'Projects';
+  const singularDeal = dealsLabel.endsWith('s') ? dealsLabel.slice(0, -1) : dealsLabel;
+
   return (
     <WorkspaceLayout
-      title="Sales Pipeline"
-      subtitle="Interactive stage velocity, value forecasting and deal progression"
+      title={`${dealsLabel} Pipeline`}
+      subtitle={`Interactive stage velocity, value forecasting and ${dealsLabel.toLowerCase()} progression`}
       actions={
         <button
           onClick={() => handleOpenAdd('New Lead')}
           className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#FAF6F0] bg-[#0D2218] hover:bg-[#163827] rounded-xl shadow-xs transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Deal</span>
+          <span>Add {singularDeal}</span>
         </button>
       }
     >
@@ -379,7 +382,7 @@ export const PipelinePage: React.FC = () => {
                 className="w-full mt-3 py-2 rounded-xl text-xs font-semibold text-[#5C6862] hover:text-[#0D2218] hover:bg-white transition-colors flex items-center justify-center gap-1.5 border border-dashed border-[#0D2218]/15"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add Deal to {stg}</span>
+                <span>Add {singularDeal} to {stg}</span>
               </button>
             </div>
           );
@@ -392,7 +395,7 @@ export const PipelinePage: React.FC = () => {
           <div className="bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/15 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in">
             <div className="p-4 bg-white border-b border-[#0D2218]/10 flex items-center justify-between">
               <h3 className="font-serif text-lg font-bold text-[#0D2218]">
-                {editingDeal ? 'Edit Deal Opportunity' : 'Add Opportunity to Pipeline'}
+                {editingDeal ? `Edit ${singularDeal}` : `Add New ${singularDeal}`}
               </h3>
               <button onClick={() => setModalOpen(false)} className="p-1 text-[#5C6862]">
                 <X className="w-4 h-4" />
@@ -401,7 +404,7 @@ export const PipelinePage: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold mb-1">Deal Title *</label>
+                <label className="block font-semibold mb-1">{singularDeal} Title *</label>
                 <input
                   type="text"
                   required

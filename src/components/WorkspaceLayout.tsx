@@ -30,13 +30,15 @@ import {
   UserPlus,
   Briefcase,
   Layers,
+  Cloud,
 } from 'lucide-react';
 import { KairooLogo } from './KairooLogo';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../services/db';
+import { db, isMasterFounder, MASTER_FOUNDER_EMAIL } from '../services/db';
 import { usePlanAccess } from '../hooks/usePlanAccess';
 import { RazorpayModal } from './RazorpayModal';
 import { InviteManagerModal } from './InviteManagerModal';
+import { CloudinaryMediaManager } from './CloudinaryMediaManager';
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -62,15 +64,27 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCloudinaryModal, setShowCloudinaryModal] = useState(false);
 
-  // User role category
-  const isFounderOrManager = !user?.role || user.role === 'Founder' || user.role === 'Manager' || user.role === 'Admin' || user.role === 'Owner';
+  // User role category - Only karthikvenkat316@gmail.com is Master Founder with full feature access
+  const isMaster = isMasterFounder(user);
+  const isFounder = isMaster || user?.role === 'Founder';
+  const isFounderOrManager = isFounder || user?.role === 'Manager' || user?.role === 'Admin' || user?.role === 'Owner';
   const isClient = user?.role === 'Client';
-  const isEmployee = user?.role === 'Employee' || user?.role === 'Sales Employee' || user?.role === 'Support Employee';
+  const isEmployee = !isClient && !isFounder && !isFounderOrManager;
 
-  // Dynamic terminology from organization customizer
-  const clientsLabel = user?.crmCustomization?.clientsLabel || 'Customers';
-  const dealsLabel = user?.crmCustomization?.dealsLabel || 'Pipeline';
+  // Dynamic terminology & adaptive CRM mode from organization onboarding survey
+  const clientsLabel = user?.crmCustomization?.clientsLabel || 'Clients';
+  const dealsLabel = user?.crmCustomization?.dealsLabel || 'Projects';
+  const crmType = user?.crmCustomization?.crmType || 'hybrid';
+  const crmModeLabel =
+    crmType === 'agency'
+      ? 'Agency Delivery'
+      : crmType === 'sales_b2b'
+      ? 'B2B Sales'
+      : crmType === 'services'
+      ? 'Consulting Hub'
+      : 'Enterprise CRM';
 
   // Unread notifications count
   const unreadNotifs = db.getNotifications().filter((n) => !n.isRead).length;
@@ -78,9 +92,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   // Master Navigation Items
   const allNavItems = [
     { name: isClient ? 'Client Portal Overview' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, visibleFor: ['founder', 'employee', 'client'] },
-    { name: clientsLabel, path: '/customers', icon: Users, visibleFor: ['founder', 'employee', 'client'] },
+    { name: `${clientsLabel} Directory`, path: '/customers', icon: Users, visibleFor: ['founder', 'employee', 'client'] },
     { name: 'Leads', path: '/leads', icon: Target, visibleFor: ['founder', 'employee'] },
-    { name: dealsLabel, path: '/pipeline', icon: GitBranch, visibleFor: ['founder', 'employee'] },
+    { name: `${dealsLabel} Pipeline`, path: '/pipeline', icon: GitBranch, visibleFor: ['founder', 'employee'] },
     { name: 'Tasks & Checklist', path: '/tasks', icon: CheckSquare, visibleFor: ['founder', 'employee'] },
     { name: 'Communication', path: '/communication', icon: MessageSquare, visibleFor: ['founder', 'employee', 'client'] },
     { name: 'Calls Log', path: '/calls', icon: PhoneCall, visibleFor: ['founder', 'employee'] },
@@ -93,7 +107,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     { name: 'Settings', path: '/settings', icon: SettingsIcon, visibleFor: ['founder', 'employee', 'client'] },
   ];
 
-  const currentRoleCategory = isClient ? 'client' : (isEmployee ? 'employee' : 'founder');
+  const currentRoleCategory = isClient ? 'client' : (isEmployee ? 'employee' : (isFounder ? 'founder' : 'employee'));
   const navItems = allNavItems.filter((item) => item.visibleFor.includes(currentRoleCategory));
 
   const handleSearchChange = (q: string) => {
@@ -136,8 +150,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <KairooLogo size="sm" variant="dark" />
           </NavLink>
 
-          <div className="hidden lg:flex items-center text-xs text-[#5C6862] gap-1 pl-3 border-l border-[#0D2218]/10">
-            <span className="font-medium">{user?.company || 'Workspace'}</span>
+          <div className="hidden lg:flex items-center text-xs text-[#5C6862] gap-2 pl-3 border-l border-[#0D2218]/10">
+            <span className="font-bold text-[#0D2218]">{user?.company || 'Workspace'}</span>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#BA5D38]/10 text-[#BA5D38] border border-[#BA5D38]/20 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-[#BA5D38]" />
+              <span>{crmModeLabel}</span>
+            </span>
             <ChevronRight className="w-3 h-3" />
             <span className="font-extrabold text-[#0D2218]">{title}</span>
           </div>
@@ -165,6 +183,17 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* User Badge, Invite Code Trigger & Plan Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Cloudinary CDN Media Manager Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setShowCloudinaryModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF6F0] hover:bg-[#0D2218] hover:text-white text-[#0D2218] border border-[#0D2218]/15 text-xs font-extrabold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
+            title="Open Cloudinary Media & Photos CDN"
+          >
+            <Cloud className="w-3.5 h-3.5 text-[#3448C5]" />
+            <span className="hidden md:inline">Cloudinary CDN</span>
+          </button>
+
           {/* Founder Invite Codes Trigger Button */}
           {isFounderOrManager && (
             <button
@@ -319,11 +348,30 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
           {/* Bottom Sidebar Hub */}
           <div className="pt-3 border-t border-[#0D2218]/10 space-y-2.5">
+            {/* Cloudinary CDN Media Access */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowCloudinaryModal(true);
+                setMobileSidebarOpen(false);
+              }}
+              className="w-full p-2.5 bg-white border border-[#0D2218]/12 rounded-xl hover:border-[#0D2218]/30 flex items-center justify-between text-left text-xs font-extrabold text-[#0D2218] shadow-xs cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Cloud className="w-4 h-4 text-[#3448C5]" />
+                <span>Cloudinary CDN Assets</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#5C6862]" />
+            </button>
+
             {/* Founder Invite Codes Quick Access */}
             {isFounderOrManager && (
               <button
                 type="button"
-                onClick={() => setShowInviteModal(true)}
+                onClick={() => {
+                  setShowInviteModal(true);
+                  setMobileSidebarOpen(false);
+                }}
                 className="w-full p-2.5 bg-white border border-[#0D2218]/12 rounded-xl hover:border-[#0D2218]/30 flex items-center justify-between text-left text-xs font-extrabold text-[#0D2218] shadow-xs cursor-pointer"
               >
                 <div className="flex items-center gap-2">
@@ -536,6 +584,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           defaultPlan={currentPlan === 'starter' ? 'growth' : 'enterprise'}
         />
       )}
+
+      {/* Cloudinary CDN Media & Photos Modal */}
+      <CloudinaryMediaManager
+        isOpen={showCloudinaryModal}
+        onClose={() => setShowCloudinaryModal(false)}
+      />
     </div>
   );
 };
