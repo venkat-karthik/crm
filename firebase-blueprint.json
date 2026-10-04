@@ -1,0 +1,301 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered business user and organization owner",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "name": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["Owner", "Admin", "Manager", "Sales Employee", "Support Employee"] },
+        "company": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "plan": { "type": "string", "enum": ["starter", "growth", "enterprise"] },
+        "planBillingCycle": { "type": "string", "enum": ["monthly", "annual"] },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "trial", "cancelled", "expired"] },
+        "subscriptionExpiresAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "email", "name", "tenantId", "plan", "createdAt"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer entity managed by business tenant",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "company": { "type": "string", "maxLength": 128 },
+        "source": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Active", "Lead", "Churned", "VIP"] },
+        "assignedEmployee": { "type": "string", "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "name", "email", "status", "createdAt"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Prospective sales lead",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "company": { "type": "string", "maxLength": 128 },
+        "source": { "type": "string", "maxLength": 64 },
+        "interest": { "type": "string", "maxLength": 128 },
+        "assignedTo": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["New Lead", "Contacted", "Interested", "Proposal", "Negotiation", "Won", "Lost"] },
+        "notes": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "name", "email", "status", "createdAt"]
+    },
+    "Deal": {
+      "title": "Deal",
+      "description": "Sales pipeline deal with stage and monetary value",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "company": { "type": "string", "maxLength": 128 },
+        "contact": { "type": "string", "maxLength": 128 },
+        "value": { "type": "number" },
+        "stage": { "type": "string", "enum": ["New Lead", "Contacted", "Interested", "Proposal", "Negotiation", "Won", "Lost"] },
+        "assignedTo": { "type": "string", "maxLength": 128 },
+        "expectedCloseDate": { "type": "string", "maxLength": 64 },
+        "tag": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "name", "stage", "value", "createdAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Follow-up or operational task",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 2048 },
+        "assignedTo": { "type": "string", "maxLength": 128 },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Urgent"] },
+        "dueDate": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"] },
+        "relatedCustomer": { "type": "string", "maxLength": 128 },
+        "relatedLead": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "title", "priority", "status", "createdAt"]
+    },
+    "Call": {
+      "title": "Call",
+      "description": "Logged customer or prospect call record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "contactName": { "type": "string", "maxLength": 128 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "type": { "type": "string", "enum": ["Inbound", "Outbound"] },
+        "status": { "type": "string", "enum": ["Scheduled", "Completed", "Missed"] },
+        "callDate": { "type": "string", "maxLength": 64 },
+        "durationMinutes": { "type": "number" },
+        "assignedEmployee": { "type": "string", "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 2048 },
+        "relatedCustomer": { "type": "string", "maxLength": 128 },
+        "relatedLead": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "contactName", "type", "status", "callDate", "createdAt"]
+    },
+    "Communication": {
+      "title": "Communication",
+      "description": "Logged correspondence entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["Call", "Email", "Meeting", "Note"] },
+        "subject": { "type": "string", "maxLength": 256 },
+        "content": { "type": "string", "maxLength": 4096 },
+        "relatedCustomer": { "type": "string", "maxLength": 128 },
+        "relatedLead": { "type": "string", "maxLength": 128 },
+        "author": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "type", "subject", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Calendar meeting or demo appointment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "date": { "type": "string", "maxLength": 64 },
+        "time": { "type": "string", "maxLength": 32 },
+        "type": { "type": "string", "enum": ["Meeting", "Call", "Task", "Follow-up"] },
+        "attendees": { "type": "string", "maxLength": 256 },
+        "notes": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "title", "date", "time", "createdAt"]
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "Support helpdesk customer ticket",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 4096 },
+        "category": { "type": "string", "enum": ["Technical", "Billing", "Feature Request", "General"] },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Critical"] },
+        "assignedTo": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["Open", "Assigned", "In Progress", "Waiting for Customer", "Resolved", "Closed"] },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "subject", "category", "priority", "status", "createdAt"]
+    },
+    "TicketMessage": {
+      "title": "TicketMessage",
+      "description": "Conversation message inside support ticket",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "ticketId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 128 },
+        "authorRole": { "type": "string", "maxLength": 64 },
+        "message": { "type": "string", "maxLength": 4096 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "ticketId", "authorName", "message", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System and business event notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 256 },
+        "message": { "type": "string", "maxLength": 1024 },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "title", "message", "isRead", "createdAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Audit and operational activity trail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "entityType": { "type": "string", "maxLength": 64 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 64 },
+        "description": { "type": "string", "maxLength": 1024 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "entityType", "action", "description", "createdAt"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Razorpay SaaS subscription and billing status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "planId": { "type": "string", "enum": ["starter", "growth", "enterprise"] },
+        "billingCycle": { "type": "string", "enum": ["monthly", "annual"] },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "status": { "type": "string", "enum": ["active", "trial", "cancelled", "expired"] },
+        "razorpayPaymentId": { "type": "string", "maxLength": 128 },
+        "razorpayOrderId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "tenantId", "userId", "planId", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with plan and tenant mapping"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Tenant customers"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Tenant leads"
+    },
+    "/deals/{dealId}": {
+      "schema": "Deal",
+      "description": "Tenant sales pipeline deals"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Tenant task checklist"
+    },
+    "/calls/{callId}": {
+      "schema": "Call",
+      "description": "Tenant call records"
+    },
+    "/communications/{commId}": {
+      "schema": "Communication",
+      "description": "Tenant communications"
+    },
+    "/appointments/{aptId}": {
+      "schema": "Appointment",
+      "description": "Tenant calendar appointments"
+    },
+    "/tickets/{ticketId}": {
+      "schema": "Ticket",
+      "description": "Tenant support tickets"
+    },
+    "/tickets/{ticketId}/messages/{messageId}": {
+      "schema": "TicketMessage",
+      "description": "Messages inside a support ticket"
+    },
+    "/notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "Tenant user notifications"
+    },
+    "/activity_logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "Tenant audit log"
+    },
+    "/subscriptions/{subscriptionId}": {
+      "schema": "Subscription",
+      "description": "Tenant payment and Razorpay subscription records"
+    }
+  }
+}

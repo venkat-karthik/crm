@@ -1,0 +1,8 @@
+{
+  "name": "Remix Kairoo CRM",
+  "description": "Smarter Customers. Stronger Business. The next-generation CRM for growing businesses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

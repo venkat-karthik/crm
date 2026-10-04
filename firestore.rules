@@ -1,0 +1,234 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isTenantOwner(tenantId) {
+      return isSignedIn() && (request.auth.uid == tenantId);
+    }
+
+    // --- USERS COLLECTION ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email', 'name', 'tenantId', 'plan', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.email is string && data.email.size() <= 256 &&
+        data.name is string && data.name.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128 &&
+        (data.plan in ['starter', 'growth', 'enterprise']);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId);
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId &&
+        isValidUser(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(userId) && request.auth.uid == userId &&
+        isValidUser(incoming()) && incoming().id == existing().id &&
+        incoming().tenantId == existing().tenantId;
+      allow delete: if false;
+    }
+
+    // --- CUSTOMERS COLLECTION ---
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'name', 'email', 'status', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128 &&
+        data.name is string && data.name.size() <= 128 &&
+        data.email is string && data.email.size() <= 256 &&
+        data.status is string && data.status.size() <= 64;
+    }
+
+    match /customers/{customerId} {
+      allow get: if isSignedIn() && isValidId(customerId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(customerId) &&
+        isValidCustomer(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(customerId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidCustomer(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(customerId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- LEADS COLLECTION ---
+    function isValidLead(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'name', 'email', 'status', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128 &&
+        data.name is string && data.name.size() <= 128 &&
+        data.email is string && data.email.size() <= 256;
+    }
+
+    match /leads/{leadId} {
+      allow get: if isSignedIn() && isValidId(leadId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(leadId) &&
+        isValidLead(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(leadId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidLead(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(leadId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- DEALS COLLECTION ---
+    function isValidDeal(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'name', 'stage', 'value', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128 &&
+        data.name is string && data.name.size() <= 128 &&
+        data.value is number;
+    }
+
+    match /deals/{dealId} {
+      allow get: if isSignedIn() && isValidId(dealId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(dealId) &&
+        isValidDeal(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(dealId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidDeal(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(dealId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- TASKS COLLECTION ---
+    function isValidTask(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'title', 'priority', 'status', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128 &&
+        data.title is string && data.title.size() <= 256;
+    }
+
+    match /tasks/{taskId} {
+      allow get: if isSignedIn() && isValidId(taskId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(taskId) &&
+        isValidTask(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(taskId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidTask(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(taskId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- CALLS COLLECTION ---
+    function isValidCall(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'contactName', 'type', 'status', 'callDate', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128;
+    }
+
+    match /calls/{callId} {
+      allow get: if isSignedIn() && isValidId(callId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(callId) &&
+        isValidCall(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(callId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidCall(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(callId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- COMMUNICATIONS COLLECTION ---
+    function isValidComm(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'type', 'subject', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128;
+    }
+
+    match /communications/{commId} {
+      allow get: if isSignedIn() && isValidId(commId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(commId) &&
+        isValidComm(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(commId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidComm(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(commId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- APPOINTMENTS COLLECTION ---
+    function isValidAppointment(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'title', 'date', 'time', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128;
+    }
+
+    match /appointments/{aptId} {
+      allow get: if isSignedIn() && isValidId(aptId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(aptId) &&
+        isValidAppointment(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(aptId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidAppointment(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(aptId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- TICKETS COLLECTION ---
+    function isValidTicket(data) {
+      return data.keys().hasAll(['id', 'tenantId', 'subject', 'category', 'priority', 'status', 'createdAt']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tenantId is string && data.tenantId.size() <= 128;
+    }
+
+    match /tickets/{ticketId} {
+      allow get: if isSignedIn() && isValidId(ticketId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(ticketId) &&
+        isValidTicket(incoming()) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(ticketId) &&
+        resource.data.tenantId == request.auth.uid &&
+        isValidTicket(incoming()) && incoming().tenantId == existing().tenantId;
+      allow delete: if isSignedIn() && isValidId(ticketId) && resource.data.tenantId == request.auth.uid;
+
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn() && isValidId(messageId) &&
+          get(/databases/$(database)/documents/tickets/$(ticketId)).data.tenantId == request.auth.uid;
+      }
+    }
+
+    // --- NOTIFICATIONS COLLECTION ---
+    match /notifications/{notifId} {
+      allow get: if isSignedIn() && isValidId(notifId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(notifId) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(notifId) && resource.data.tenantId == request.auth.uid;
+      allow delete: if isSignedIn() && isValidId(notifId) && resource.data.tenantId == request.auth.uid;
+    }
+
+    // --- ACTIVITY LOGS COLLECTION ---
+    match /activity_logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(logId) && incoming().tenantId == request.auth.uid;
+      allow update, delete: if false; // Audit logs are append-only
+    }
+
+    // --- SUBSCRIPTIONS COLLECTION ---
+    match /subscriptions/{subscriptionId} {
+      allow get: if isSignedIn() && isValidId(subscriptionId) && resource.data.tenantId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(subscriptionId) && incoming().tenantId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(subscriptionId) && resource.data.tenantId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}
