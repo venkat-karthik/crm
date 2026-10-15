@@ -29,13 +29,13 @@ interface AuthContextType {
     password?: string,
     company?: string,
     role?: User['role'],
-    plan?: 'starter' | 'growth' | 'enterprise'
+    plan?: User['plan']
   ) => Promise<User>;
   signInWithGoogle: () => Promise<User | null>;
   sendPasswordReset: (email: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUserRole: (userId: string, newRole: User['role']) => void;
-  updateUserPlan: (plan: 'starter' | 'growth' | 'enterprise', billingCycle?: 'monthly' | 'annual') => void;
+  updateUserPlan: (plan: User['plan'], billingCycle?: 'monthly' | 'annual') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -218,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password?: string,
     company?: string,
     role: User['role'] = 'Sales Employee',
-    plan: 'starter' | 'growth' | 'enterprise' = 'growth'
+    plan: User['plan'] = 'standard'
   ): Promise<User> => {
     setIsLoading(true);
     try {
@@ -292,7 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUserPlan = async (
-    newPlan: 'starter' | 'growth' | 'enterprise',
+    newPlan: User['plan'],
     billingCycle: 'monthly' | 'annual' = 'monthly'
   ) => {
     if (!user) return;

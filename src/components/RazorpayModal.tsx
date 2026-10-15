@@ -14,7 +14,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { SAAS_PLANS, PlanTier, BillingCycle, initiateRazorpayPayment } from '../services/razorpay';
+import { SAAS_PLANS, PlanTier, BillingCycle, CANONICAL_PLANS, initiateRazorpayPayment } from '../services/razorpay';
 import { useAuth } from '../context/AuthContext';
 
 interface RazorpayModalProps {
@@ -28,7 +28,7 @@ interface RazorpayModalProps {
 export const RazorpayModal: React.FC<RazorpayModalProps> = ({
   isOpen,
   onClose,
-  defaultPlan = 'growth',
+  defaultPlan = 'standard',
   defaultBilling = 'monthly',
   onSuccessUpgrade,
 }) => {
@@ -209,8 +209,8 @@ export const RazorpayModal: React.FC<RazorpayModalProps> = ({
               </div>
 
               {/* Plan Cards Selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {(['starter', 'growth', 'enterprise'] as PlanTier[]).map((tier) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {CANONICAL_PLANS.map((tier) => {
                   const plan = SAAS_PLANS[tier];
                   const isSelected = selectedPlan === tier;
                   const tierPrice = billingCycle === 'annual' ? plan.priceAnnualINR : plan.priceMonthlyINR;
@@ -219,34 +219,38 @@ export const RazorpayModal: React.FC<RazorpayModalProps> = ({
                     <div
                       key={tier}
                       onClick={() => setSelectedPlan(tier)}
-                      className={`cursor-pointer rounded-xl p-4 border-2 transition-all relative flex flex-col justify-between ${
+                      className={`cursor-pointer rounded-xl p-3 sm:p-3.5 border-2 transition-all relative flex flex-col justify-between ${
                         isSelected
                           ? 'border-[#0D2218] bg-[#FAF6F0]/80 shadow-md ring-2 ring-[#0D2218]/10'
                           : 'border-[#0D2218]/10 hover:border-[#0D2218]/30 bg-white'
                       }`}
                     >
                       {plan.popular && (
-                        <div className="absolute -top-2.5 right-3 bg-[#BA5D38] text-white text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full shadow-sm">
+                        <div className="absolute -top-2.5 right-2 bg-[#BA5D38] text-white text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full shadow-sm">
                           Popular
                         </div>
                       )}
 
                       <div>
                         <div className="flex items-center justify-between">
-                          <h4 className="font-extrabold text-sm text-[#0D2218]">{plan.name}</h4>
-                          {isSelected && <CheckCircle2 className="w-4 h-4 text-[#0D2218] fill-[#FAF6F0]" />}
+                          <h4 className="font-extrabold text-xs sm:text-sm text-[#0D2218] leading-tight">{plan.name}</h4>
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-[#0D2218] fill-[#FAF6F0] shrink-0" />}
                         </div>
-                        <p className="text-[11px] text-[#5C6862] mt-0.5">{plan.badge}</p>
+                        <p className="text-[10px] text-[#5C6862] mt-0.5 truncate">{plan.badge}</p>
 
-                        <div className="mt-3">
-                          <span className="text-xl font-extrabold text-[#0D2218]">₹{tierPrice.toLocaleString()}</span>
-                          <span className="text-[10px] text-[#5C6862]">
-                            /{billingCycle === 'annual' ? 'yr' : 'mo'}
+                        <div className="mt-2.5">
+                          <span className="text-lg font-extrabold text-[#0D2218]">
+                            {tierPrice === 0 ? 'Free' : `₹${tierPrice.toLocaleString()}`}
                           </span>
+                          {tierPrice > 0 && (
+                            <span className="text-[10px] text-[#5C6862]">
+                              /{billingCycle === 'annual' ? 'yr' : 'mo'}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      <div className="mt-3 pt-3 border-t border-[#0D2218]/10 space-y-1 text-[11px] text-[#5C6862]">
+                      <div className="mt-2.5 pt-2 border-t border-[#0D2218]/10 space-y-1 text-[10px] text-[#5C6862]">
                         <div className="flex items-center gap-1 font-semibold text-[#0D2218]">
                           <Check className="w-3 h-3 text-emerald-600 shrink-0" />
                           <span>{plan.maxSeats === 'Unlimited' ? 'Unlimited Seats' : `${plan.maxSeats} Team Seat`}</span>
@@ -266,8 +270,8 @@ export const RazorpayModal: React.FC<RazorpayModalProps> = ({
                 <div className="flex justify-between items-center text-sm font-bold text-[#0D2218]">
                   <span>Order Total ({currentPlanConfig.name} - {billingCycle}):</span>
                   <span className="text-xl font-extrabold text-[#BA5D38]">
-                    ₹{priceINR.toLocaleString()}
-                    <span className="text-xs font-normal text-gray-500 ml-1">(approx. ${priceUSD})</span>
+                    {priceINR === 0 ? 'Free' : `₹${priceINR.toLocaleString()}`}
+                    {priceINR > 0 && <span className="text-xs font-normal text-gray-500 ml-1">(approx. ${priceUSD})</span>}
                   </span>
                 </div>
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#0D2218]/10 text-xs text-[#5C6862]">
@@ -309,7 +313,12 @@ export const RazorpayModal: React.FC<RazorpayModalProps> = ({
                   className="w-full sm:flex-1 py-3 px-6 bg-[#0D2218] hover:bg-[#163827] text-[#FAF6F0] font-extrabold text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
-                    <span>Opening Razorpay Gateway...</span>
+                    <span>Activating Plan...</span>
+                  ) : priceINR === 0 ? (
+                    <>
+                      <span>Activate Free Plan</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
                   ) : (
                     <>
                       <span>Pay ₹{priceINR.toLocaleString()} with Razorpay</span>

@@ -127,7 +127,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     navigate(result.route);
   };
 
-  const planBadgeColors = {
+  const planBadgeColors: Record<string, string> = {
+    free: 'bg-stone-100 text-stone-800 border-stone-300',
+    basic: 'bg-amber-100 text-amber-900 border-amber-300',
+    standard: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+    premium: 'bg-[#0D2218] text-[#C5A059] border-[#C5A059]/40',
     starter: 'bg-amber-100 text-amber-900 border-amber-300',
     growth: 'bg-emerald-100 text-emerald-900 border-emerald-300',
     enterprise: 'bg-[#0D2218] text-[#C5A059] border-[#C5A059]/40',
@@ -218,7 +222,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 <span>{planInfo.name}</span>
               </div>
 
-              {currentPlan !== 'enterprise' && (
+              {currentPlan !== 'enterprise' && currentPlan !== 'premium' && (
                 <button
                   type="button"
                   onClick={() => setShowRazorpayModal(true)}

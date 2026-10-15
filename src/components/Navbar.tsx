@@ -6,13 +6,12 @@ import { useAuth } from '../context/AuthContext';
 interface NavbarProps {
   onOpenLogin: () => void;
   onOpenSignup: () => void;
-  onOpenDemo: () => void;
+  onOpenDemo?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenLogin,
   onOpenSignup,
-  onOpenDemo,
 }) => {
   const { user, isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);

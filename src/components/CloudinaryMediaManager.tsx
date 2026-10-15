@@ -257,6 +257,13 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
                           alt={asset.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (!target.dataset.fallbackTried) {
+                              target.dataset.fallbackTried = 'true';
+                              target.src = '/assets/images/hero_workspace_office_1790601348067.jpg';
+                            }
+                          }}
                         />
                         <div className="absolute top-2 left-2 bg-[#0D2218]/80 backdrop-blur-xs text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">
                           {asset.category.replace('_', ' ')}

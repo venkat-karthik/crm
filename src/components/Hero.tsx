@@ -12,13 +12,13 @@ import {
 } from 'lucide-react';
 import { HeroDashboard } from './HeroDashboard';
 import { FloatingInsightCard, FloatingCardData } from './FloatingInsightCard';
+import heroWorkspaceImg from '../assets/images/hero_workspace_office_1790601348067.jpg';
 
 interface HeroProps {
   onOpenSignup: () => void;
-  onOpenDemo: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onOpenSignup, onOpenDemo }) => {
+export const Hero: React.FC<HeroProps> = ({ onOpenSignup }) => {
   const floatingCards: FloatingCardData[] = [
     {
       id: 'lead',
@@ -141,20 +141,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenSignup, onOpenDemo }) => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-9">
               <button
                 onClick={onOpenSignup}
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-sm sm:text-base font-semibold text-[#FAF6F0] bg-[#0D2218] hover:bg-[#163827] rounded-full transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer"
+                className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm sm:text-base font-semibold text-[#FAF6F0] bg-[#0D2218] hover:bg-[#163827] rounded-full transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer"
               >
                 <span>Get Started Free</span>
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </button>
-
-              <button
-                onClick={onOpenDemo}
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm sm:text-base font-medium text-[#0D2218] bg-white/90 hover:bg-white border border-[#0D2218]/15 hover:border-[#0D2218]/30 rounded-full transition-all duration-200 shadow-xs hover:shadow cursor-pointer"
-              >
-                <div className="w-6 h-6 rounded-full bg-[#0D2218]/5 flex items-center justify-center text-[#BA5D38]">
-                  <Play className="w-3 h-3 fill-current ml-0.5" />
-                </div>
-                <span>Watch Demo</span>
               </button>
             </div>
 
@@ -185,9 +175,16 @@ export const Hero: React.FC<HeroProps> = ({ onOpenSignup, onOpenDemo }) => {
               {/* Modern Warm Workspace Backdrop Photo */}
               <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[16/6] w-full max-h-36 object-cover shadow-xs">
                 <img
-                  src="/src/assets/images/hero_workspace_office_1790601348067.jpg"
+                  src={heroWorkspaceImg}
                   alt="Modern warm sunlit executive workspace with desk and plants"
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (!target.dataset.fallbackTried) {
+                      target.dataset.fallbackTried = 'true';
+                      target.src = '/assets/images/hero_workspace_office_1790601348067.jpg';
+                    }
+                  }}
                   className="w-full h-full object-cover object-center filter saturate-[0.95] contrast-[1.02]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#FCFBF8] via-black/10 to-black/25" />

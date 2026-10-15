@@ -10,7 +10,6 @@ import { Testimonials } from '../components/Testimonials';
 import { Stats } from '../components/Stats';
 import { CTA } from '../components/CTA';
 import { Footer } from '../components/Footer';
-import { DemoModal } from '../components/DemoModal';
 import { FeatureDetailModal } from '../components/FeatureDetailModal';
 
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +17,6 @@ import { useAuth } from '../context/AuthContext';
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
 
   const handleOpenLogin = () => {
@@ -29,8 +27,11 @@ export const LandingPage: React.FC = () => {
     navigate('/signup');
   };
 
-  const handleOpenDemo = () => {
-    setDemoModalOpen(true);
+  const handleScrollToFeatures = () => {
+    const el = document.querySelector('#features');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Feature mapping directly to workspace routes
@@ -67,14 +68,12 @@ export const LandingPage: React.FC = () => {
       <Navbar
         onOpenLogin={handleOpenLogin}
         onOpenSignup={handleOpenSignup}
-        onOpenDemo={handleOpenDemo}
       />
 
       <main>
         {/* 2. Hero Section */}
         <Hero
           onOpenSignup={handleOpenSignup}
-          onOpenDemo={handleOpenDemo}
         />
 
         {/* 3. Everything Connected */}
@@ -99,7 +98,7 @@ export const LandingPage: React.FC = () => {
         />
 
         {/* 7. Real Businesses. Real Results. */}
-        <Testimonials onOpenStories={handleOpenDemo} />
+        <Testimonials onOpenStories={handleScrollToFeatures} />
 
         {/* 8. Statistics */}
         <Stats />
@@ -107,7 +106,6 @@ export const LandingPage: React.FC = () => {
         {/* 9. Final CTA */}
         <CTA
           onOpenSignup={handleOpenSignup}
-          onOpenDemo={handleOpenDemo}
         />
       </main>
 
@@ -115,17 +113,7 @@ export const LandingPage: React.FC = () => {
       <Footer
         onOpenPricing={handleOpenSignup}
         onOpenContact={handleOpenSignup}
-        onOpenDocumentation={handleOpenDemo}
-      />
-
-      {/* Interactive Modals */}
-      <DemoModal
-        isOpen={demoModalOpen}
-        onClose={() => setDemoModalOpen(false)}
-        onOpenSignup={() => {
-          setDemoModalOpen(false);
-          handleOpenSignup();
-        }}
+        onOpenDocumentation={handleScrollToFeatures}
       />
 
       <FeatureDetailModal

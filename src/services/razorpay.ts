@@ -8,8 +8,10 @@ declare global {
   }
 }
 
-export type PlanTier = 'starter' | 'growth' | 'enterprise';
+export type PlanTier = 'free' | 'basic' | 'standard' | 'premium' | 'starter' | 'growth' | 'enterprise';
 export type BillingCycle = 'monthly' | 'annual';
+
+export const CANONICAL_PLANS: PlanTier[] = ['free', 'basic', 'standard', 'premium'];
 
 export interface PlanConfig {
   id: PlanTier;
@@ -18,7 +20,7 @@ export interface PlanConfig {
   tagline: string;
   description: string;
   priceMonthlyINR: number;
-  priceAnnualINR: number; // 2 months free
+  priceAnnualINR: number; // ~17% annual discount
   priceMonthlyUSD: number;
   priceAnnualUSD: number;
   popular?: boolean;
@@ -29,139 +31,191 @@ export interface PlanConfig {
   accessibleRoutes: string[];
 }
 
+const FREE_PLAN: PlanConfig = {
+  id: 'free',
+  name: 'Free Starter',
+  badge: 'Free Forever',
+  tagline: 'Essential contact and task tracking for solo founders and startups.',
+  description: 'Everything you need to kick off your customer relationships with zero cost and clean organization.',
+  priceMonthlyINR: 0,
+  priceAnnualINR: 0,
+  priceMonthlyUSD: 0,
+  priceAnnualUSD: 0,
+  popular: false,
+  maxSeats: 1,
+  maxContacts: 100,
+  features: [
+    'Up to 100 Active Contacts & Inbound Leads',
+    '1 Team User Seat (Solo)',
+    'Core Task & Follow-up Checklist',
+    'Basic Activity & Note Logging',
+    'Standard Customer Directory',
+    'Community Support & Documentation',
+  ],
+  highlightFeatures: [
+    '100 Contacts',
+    '1 Team Seat',
+    'Task Checklist',
+    'Basic Directory',
+  ],
+  accessibleRoutes: [
+    '/dashboard',
+    '/customers',
+    '/leads',
+    '/tasks',
+    '/notifications',
+    '/settings',
+  ],
+};
+
+const BASIC_PLAN: PlanConfig = {
+  id: 'basic',
+  name: 'Basic Core',
+  badge: 'Early Teams & Micro-SMB',
+  tagline: 'Visual sales pipeline, customer records, and ticket management.',
+  description: 'Perfect for small teams and boutique agencies looking to track deals, follow up consistently, and resolve support requests.',
+  priceMonthlyINR: 1000,
+  priceAnnualINR: 9990,
+  priceMonthlyUSD: 12,
+  priceAnnualUSD: 120,
+  popular: false,
+  maxSeats: 2,
+  maxContacts: 1000,
+  features: [
+    'Up to 1,000 Customer & Deal Records',
+    '2 Team User Seats',
+    'Visual Deals Pipeline Kanban (Drag & Drop)',
+    'Communication & Email Logging Hub',
+    'Standard Helpdesk Support Tickets Desk',
+    'Document Uploads & Edge Cloud Media (1 GB)',
+    'Standard Email Support (24h SLA)',
+  ],
+  highlightFeatures: [
+    '1,000 Contacts',
+    '2 Team Seats',
+    'Kanban Pipeline',
+    'Ticket Helpdesk',
+    'Email Support',
+  ],
+  accessibleRoutes: [
+    '/dashboard',
+    '/customers',
+    '/leads',
+    '/pipeline',
+    '/tasks',
+    '/communication',
+    '/tickets',
+    '/notifications',
+    '/settings',
+  ],
+};
+
+const STANDARD_PLAN: PlanConfig = {
+  id: 'standard',
+  name: 'Standard Growth',
+  badge: 'Most Popular',
+  tagline: 'Multi-agent collaboration, meeting scheduling, calls, and analytics.',
+  description: 'The workhorse tier for fast-growing sales and customer success teams managing active client pipelines.',
+  priceMonthlyINR: 2999,
+  priceAnnualINR: 29990,
+  priceMonthlyUSD: 36,
+  priceAnnualUSD: 360,
+  popular: true,
+  maxSeats: 10,
+  maxContacts: 10000,
+  features: [
+    'Up to 10,000 Contacts, Leads & Deals',
+    'Up to 10 Team Seats with Role Hierarchy (RBAC)',
+    'Multi-Stage Visual Pipeline Velocity & Close Forecasts',
+    'Interactive Calendar & Meeting Scheduling Hub',
+    'Voice & Call Logging with Duration Tracking',
+    'Priority Helpdesk Tickets Desk with SLA Routing',
+    'Real-Time Reports, Conversion Metrics & CSV Export',
+    'Automated Daily Cloud Backups',
+    'Priority Support (12h SLA)',
+  ],
+  highlightFeatures: [
+    '10,000 Contacts',
+    '10 Team Seats',
+    'Pipeline Forecasts',
+    'Calendar & Calls',
+    'Priority Tickets Desk',
+    'Real-Time Analytics',
+  ],
+  accessibleRoutes: [
+    '/dashboard',
+    '/customers',
+    '/leads',
+    '/pipeline',
+    '/tasks',
+    '/communication',
+    '/calls',
+    '/calendar',
+    '/tickets',
+    '/reports',
+    '/notifications',
+    '/users',
+    '/settings',
+  ],
+};
+
+const PREMIUM_PLAN: PlanConfig = {
+  id: 'premium',
+  name: 'Premium Enterprise',
+  badge: 'Maximum Power & AI',
+  tagline: 'Unlimited scale, predictive Gemini AI insights, and 1-hour VIP SLA.',
+  description: 'Enterprise-grade architecture with AI deal scoring, automated churn detection, custom branding, and dedicated VIP support.',
+  priceMonthlyINR: 4999,
+  priceAnnualINR: 49990,
+  priceMonthlyUSD: 59,
+  priceAnnualUSD: 590,
+  popular: false,
+  maxSeats: 'Unlimited',
+  maxContacts: 'Unlimited',
+  features: [
+    'Everything in Standard Growth',
+    'Unlimited Team Seats & Multi-Tenant Organization Scope',
+    'Gemini AI Deal Forecasting & Win Likelihood Scoring',
+    'Automated Churn Risk Detection & Retention Actions',
+    'Executive Summary & Natural Language CRM Querying',
+    'Custom Organization Branding & Adaptive Terminology',
+    'Unlimited High-Speed Cloud CDN Media Storage',
+    'Dedicated Account Manager & 1-Hour VIP SLA',
+  ],
+  highlightFeatures: [
+    'Unlimited Everything',
+    'Gemini AI Insights',
+    'Churn Risk Prediction',
+    'Custom Branding',
+    '1-Hour VIP SLA',
+  ],
+  accessibleRoutes: [
+    '/dashboard',
+    '/customers',
+    '/leads',
+    '/pipeline',
+    '/tasks',
+    '/communication',
+    '/calls',
+    '/calendar',
+    '/tickets',
+    '/reports',
+    '/ai-insights',
+    '/notifications',
+    '/users',
+    '/settings',
+  ],
+};
+
 export const SAAS_PLANS: Record<PlanTier, PlanConfig> = {
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    badge: 'Solopreneur & Micro-SMB',
-    tagline: 'Essential CRM foundations for independent business owners.',
-    description: 'Perfect for solo founders, freelancers, and small shops needing structured client tracking without clutter.',
-    priceMonthlyINR: 999,
-    priceAnnualINR: 9990,
-    priceMonthlyUSD: 12,
-    priceAnnualUSD: 120,
-    popular: false,
-    maxSeats: 1,
-    maxContacts: 500,
-    features: [
-      'Up to 500 Active Customers & Inbound Leads',
-      '1 Team User Seat',
-      'Core Task & Follow-up Checklist',
-      'Basic Activity & Communication Logs',
-      'Daily Automated Cloud Backups',
-      'Standard Email Support',
-    ],
-    highlightFeatures: [
-      '500 Contacts',
-      '1 Team Seat',
-      'Task Checklist',
-      'Basic Logs',
-    ],
-    accessibleRoutes: [
-      '/dashboard',
-      '/customers',
-      '/leads',
-      '/tasks',
-      '/communication',
-      '/notifications',
-      '/settings',
-    ],
-  },
-  growth: {
-    id: 'growth',
-    name: 'Growth Pro',
-    badge: 'Most Popular',
-    tagline: 'Complete sales acceleration engine for fast-growing teams.',
-    description: 'The sweet spot for agencies, sales teams, and SMBs ready to scale deals, customer service, and conversions.',
-    priceMonthlyINR: 2499,
-    priceAnnualINR: 24990,
-    priceMonthlyUSD: 29,
-    priceAnnualUSD: 290,
-    popular: true,
-    maxSeats: 5,
-    maxContacts: 'Unlimited',
-    features: [
-      'Unlimited Customers & Leads',
-      'Up to 5 Team User Seats with Role Permissions',
-      'Visual Sales Pipeline Kanban (Drag & Drop)',
-      'Calendar & Interactive Client Booking',
-      'Voice Call Logging, Duration Tracking & Notes',
-      'Multi-Agent Support Tickets Desk with SLAs',
-      'Real-Time Reports, Conversion Metrics & CSV Export',
-      'Audit Activity Stream',
-      'Priority Support (12h response)',
-    ],
-    highlightFeatures: [
-      'Unlimited Contacts',
-      '5 Team Seats',
-      'Pipeline Kanban',
-      'Calendar & Calls',
-      'Support Tickets',
-      'Real-time Reports',
-    ],
-    accessibleRoutes: [
-      '/dashboard',
-      '/customers',
-      '/leads',
-      '/pipeline',
-      '/tasks',
-      '/communication',
-      '/calls',
-      '/calendar',
-      '/tickets',
-      '/reports',
-      '/notifications',
-      '/users',
-      '/settings',
-    ],
-  },
-  enterprise: {
-    id: 'enterprise',
-    name: 'Enterprise Scale',
-    badge: 'Maximum Power',
-    tagline: 'Predictive intelligence, unlimited seats, and dedicated scale.',
-    description: 'For established enterprises requiring Gemini AI insights, automated revenue forecasting, and VIP custom support.',
-    priceMonthlyINR: 5999,
-    priceAnnualINR: 59990,
-    priceMonthlyUSD: 72,
-    priceAnnualUSD: 720,
-    popular: false,
-    maxSeats: 'Unlimited',
-    maxContacts: 'Unlimited',
-    features: [
-      'Everything in Growth Pro',
-      'Unlimited Team Seats & Organization Departments',
-      'Gemini AI Deal Forecasting & Win Likelihood Scoring',
-      'Automated Churn Risk Detection & Retention Actions',
-      'Executive Summary & Natural Language CRM Querying',
-      'Custom Branding & White-Label Organization Profile',
-      'Dedicated Razorpay Invoicing & Webhook Automations',
-      '24/7 Dedicated Account Manager & 1-Hour SLA',
-    ],
-    highlightFeatures: [
-      'Unlimited Everything',
-      'Gemini AI Insights',
-      'Churn Risk Prediction',
-      'Custom Branding',
-      '24/7 VIP SLA',
-    ],
-    accessibleRoutes: [
-      '/dashboard',
-      '/customers',
-      '/leads',
-      '/pipeline',
-      '/tasks',
-      '/communication',
-      '/calls',
-      '/calendar',
-      '/tickets',
-      '/reports',
-      '/ai-insights',
-      '/notifications',
-      '/users',
-      '/settings',
-    ],
-  },
+  free: FREE_PLAN,
+  basic: BASIC_PLAN,
+  standard: STANDARD_PLAN,
+  premium: PREMIUM_PLAN,
+  // Backward compatibility aliases
+  starter: { ...BASIC_PLAN, id: 'starter' },
+  growth: { ...STANDARD_PLAN, id: 'growth' },
+  enterprise: { ...PREMIUM_PLAN, id: 'enterprise' },
 };
 
 /**
@@ -225,6 +279,18 @@ export async function initiateRazorpayPayment(params: {
 
     const plan = SAAS_PLANS[planId];
     const amountINR = billingCycle === 'annual' ? plan.priceAnnualINR : plan.priceMonthlyINR;
+
+    // Free plan activates instantly without charging Razorpay
+    if (planId === 'free' || amountINR === 0) {
+      onSuccess({
+        success: true,
+        paymentId: `free_tier_${Date.now()}`,
+        amountINR: 0,
+        planId: 'free',
+        billingCycle,
+      });
+      return;
+    }
 
     // 2. Open Razorpay Checkout modal if script is loaded
     if (isScriptLoaded && window.Razorpay) {

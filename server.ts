@@ -211,12 +211,17 @@ app.post('/api/razorpay/create-order', async (req: Request, res: Response) => {
     const { planId, billingCycle = 'monthly', userId, userEmail, companyName } = req.body;
 
     const planPrices: Record<string, { monthly: number; annual: number; name: string }> = {
-      starter: { monthly: 999, annual: 9990, name: 'Starter Solopreneur' },
-      growth: { monthly: 2499, annual: 24990, name: 'Professional Growth' },
-      enterprise: { monthly: 5999, annual: 59990, name: 'Enterprise Scale' },
+      free: { monthly: 0, annual: 0, name: 'Free Starter' },
+      basic: { monthly: 1000, annual: 9990, name: 'Basic Core' },
+      standard: { monthly: 2999, annual: 29990, name: 'Standard Growth' },
+      premium: { monthly: 4999, annual: 49990, name: 'Premium Enterprise' },
+      // Aliases
+      starter: { monthly: 1000, annual: 9990, name: 'Basic Core' },
+      growth: { monthly: 2999, annual: 29990, name: 'Standard Growth' },
+      enterprise: { monthly: 4999, annual: 49990, name: 'Premium Enterprise' },
     };
 
-    const targetPlan = planPrices[planId] || planPrices.growth;
+    const targetPlan = planPrices[planId] || planPrices.standard;
     const amountINR = billingCycle === 'annual' ? targetPlan.annual : targetPlan.monthly;
     const amountPaise = amountINR * 100; // Razorpay expects smallest currency sub-unit
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
+import resultsEnvImg from '../assets/images/results_business_environment_1790601375598.jpg';
 
 interface TestimonialsProps {
   onOpenStories?: () => void;
@@ -80,9 +81,16 @@ export const Testimonials: React.FC<TestimonialsProps> = ({ onOpenStories }) => 
           {/* Business Environment Image */}
           <div className="relative aspect-[16/8] sm:aspect-[16/7] lg:aspect-[16/6] w-full min-h-[300px]">
             <img
-              src="/src/assets/images/results_business_environment_1790601375598.jpg"
+              src={resultsEnvImg}
               alt="Premium executive modern corporate environment"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.dataset.fallbackTried) {
+                  target.dataset.fallbackTried = 'true';
+                  target.src = '/assets/images/results_business_environment_1790601375598.jpg';
+                }
+              }}
               className="w-full h-full object-cover filter saturate-[0.92] contrast-[1.05]"
             />
             {/* Cinematic Gradient overlay */}

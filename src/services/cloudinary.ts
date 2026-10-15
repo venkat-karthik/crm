@@ -3,6 +3,11 @@
  * Production CDN delivery, transformations, and asset management for Kairoo CRM
  */
 
+import heroWorkspaceImg from '../assets/images/hero_workspace_office_1790601348067.jpg';
+import connectedOfficeImg from '../assets/images/connected_office_lifestyle_1790601362384.jpg';
+import resultsEnvImg from '../assets/images/results_business_environment_1790601375598.jpg';
+import ctaCityImg from '../assets/images/cta_cinematic_city_1790601393970.jpg';
+
 export interface CloudinaryAsset {
   id: string;
   publicId: string;
@@ -17,14 +22,14 @@ export interface CloudinaryAsset {
   uploadedAt: string;
 }
 
-// Pre-seeded CRM workspace images mapped to Cloudinary asset paths
+// Pre-seeded CRM workspace images mapped to reliable bundled assets
 export const SEED_CRM_IMAGES: CloudinaryAsset[] = [
   {
     id: 'cld_hero_workspace',
     publicId: 'kairoo_crm/hero_workspace_office',
     name: 'Executive Workspace Display',
-    url: '/assets/images/hero_workspace_office_1790601348067.jpg',
-    secureUrl: '/assets/images/hero_workspace_office_1790601348067.jpg',
+    url: heroWorkspaceImg,
+    secureUrl: heroWorkspaceImg,
     format: 'jpg',
     width: 1920,
     height: 1080,
@@ -35,8 +40,8 @@ export const SEED_CRM_IMAGES: CloudinaryAsset[] = [
     id: 'cld_office_lifestyle',
     publicId: 'kairoo_crm/connected_office_lifestyle',
     name: 'Connected Team Operations',
-    url: '/assets/images/connected_office_lifestyle_1790601362384.jpg',
-    secureUrl: '/assets/images/connected_office_lifestyle_1790601362384.jpg',
+    url: connectedOfficeImg,
+    secureUrl: connectedOfficeImg,
     format: 'jpg',
     width: 1600,
     height: 900,
@@ -47,8 +52,8 @@ export const SEED_CRM_IMAGES: CloudinaryAsset[] = [
     id: 'cld_results_env',
     publicId: 'kairoo_crm/results_business_environment',
     name: 'Enterprise Client Architecture',
-    url: '/assets/images/results_business_environment_1790601375598.jpg',
-    secureUrl: '/assets/images/results_business_environment_1790601375598.jpg',
+    url: resultsEnvImg,
+    secureUrl: resultsEnvImg,
     format: 'jpg',
     width: 1600,
     height: 900,
@@ -59,8 +64,8 @@ export const SEED_CRM_IMAGES: CloudinaryAsset[] = [
     id: 'cld_cta_city',
     publicId: 'kairoo_crm/cta_cinematic_city',
     name: 'Atmospheric Dusk Panorama',
-    url: '/assets/images/cta_cinematic_city_1790601393970.jpg',
-    secureUrl: '/assets/images/cta_cinematic_city_1790601393970.jpg',
+    url: ctaCityImg,
+    secureUrl: ctaCityImg,
     format: 'jpg',
     width: 1920,
     height: 1080,
@@ -82,15 +87,25 @@ export const cloudinaryService = {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_CRM_IMAGES));
         return SEED_CRM_IMAGES;
       }
-      const parsed = JSON.parse(raw);
-      // Merge with seed images if not present
-      const ids = new Set(parsed.map((a: CloudinaryAsset) => a.id));
+      const parsed: CloudinaryAsset[] = JSON.parse(raw);
+      // Auto-heal stale paths for pre-seeded showcase assets
+      const seedMap = new Map(SEED_CRM_IMAGES.map((s) => [s.id, s]));
+      const updated = parsed.map((a: CloudinaryAsset) => {
+        const seed = seedMap.get(a.id);
+        if (seed && (!a.secureUrl || a.secureUrl.startsWith('/assets/images/'))) {
+          return { ...a, url: seed.url, secureUrl: seed.secureUrl };
+        }
+        return a;
+      });
+      // Merge any missing seed images
+      const ids = new Set(updated.map((a: CloudinaryAsset) => a.id));
       for (const s of SEED_CRM_IMAGES) {
         if (!ids.has(s.id)) {
-          parsed.unshift(s);
+          updated.unshift(s);
         }
       }
-      return parsed;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
     } catch {
       return SEED_CRM_IMAGES;
     }

@@ -16,7 +16,7 @@ export interface Organization {
     clientsLabel: string;
     dealsLabel: string;
   };
-  plan: 'starter' | 'growth' | 'enterprise';
+  plan: 'free' | 'basic' | 'standard' | 'premium' | 'starter' | 'growth' | 'enterprise';
   createdAt: string;
   updatedAt: string;
 }
@@ -32,7 +32,7 @@ export interface User {
   tenantId?: string;
   organizationId?: string;
   inviteCodeUsed?: string;
-  plan?: 'starter' | 'growth' | 'enterprise';
+  plan?: 'free' | 'basic' | 'standard' | 'premium' | 'starter' | 'growth' | 'enterprise';
   planBillingCycle?: 'monthly' | 'annual';
   subscriptionStatus?: 'active' | 'trial' | 'cancelled' | 'expired';
   subscriptionExpiresAt?: string;

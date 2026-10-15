@@ -17,8 +17,7 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { RazorpayModal } from '../components/RazorpayModal';
 import { AuthModal } from '../components/AuthModal';
-import { DemoModal } from '../components/DemoModal';
-import { SAAS_PLANS, PlanTier, BillingCycle } from '../services/razorpay';
+import { SAAS_PLANS, PlanTier, BillingCycle, CANONICAL_PLANS } from '../services/razorpay';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,7 +30,6 @@ export const PricingPage: React.FC = () => {
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PlanTier | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const handleSelectPlan = (tier: PlanTier) => {
@@ -62,23 +60,24 @@ export const PricingPage: React.FC = () => {
   ];
 
   const comparisonRows = [
-    { category: 'CRM & Contacts', name: 'Contact & Lead Limit', starter: '500 Contacts', growth: 'Unlimited', enterprise: 'Unlimited' },
-    { category: 'CRM & Contacts', name: 'Team User Seats', starter: '1 Seat', growth: 'Up to 5 Seats', enterprise: 'Unlimited Seats' },
-    { category: 'CRM & Contacts', name: 'Task Checklist & Activity Log', starter: true, growth: true, enterprise: true },
-    { category: 'Sales Automation', name: 'Visual Deals Pipeline Kanban', starter: false, growth: true, enterprise: true },
-    { category: 'Sales Automation', name: 'Drag & Drop Stage Velocity', starter: false, growth: true, enterprise: true },
-    { category: 'Sales Automation', name: 'Expected Close Date Forecasts', starter: false, growth: true, enterprise: true },
-    { category: 'Communications', name: 'Email & Note Logging', starter: true, growth: true, enterprise: true },
-    { category: 'Communications', name: 'VoIP Call Logging & Duration', starter: false, growth: true, enterprise: true },
-    { category: 'Communications', name: 'Calendar & Meeting Scheduler', starter: false, growth: true, enterprise: true },
-    { category: 'Customer Support', name: 'Helpdesk Tickets Desk', starter: false, growth: true, enterprise: true },
-    { category: 'Customer Support', name: 'Ticket SLA & Priority Routing', starter: false, growth: true, enterprise: true },
-    { category: 'Analytics & AI', name: 'Real-Time Reports & Metric Cards', starter: 'Basic', growth: 'Full Suite', enterprise: 'Full Suite + Exports' },
-    { category: 'Analytics & AI', name: 'Gemini AI Win Likelihood Scoring', starter: false, growth: false, enterprise: true },
-    { category: 'Analytics & AI', name: 'Automated Churn Risk Detection', starter: false, growth: false, enterprise: true },
-    { category: 'Security & Scale', name: 'Multi-Tenant Data Isolation', starter: true, growth: true, enterprise: true },
-    { category: 'Security & Scale', name: 'Custom Company Branding', starter: false, growth: false, enterprise: true },
-    { category: 'Security & Scale', name: 'Support SLA', starter: 'Email (48h)', growth: 'Priority (12h)', enterprise: 'Dedicated VIP (1h)' },
+    { category: 'CRM & Contacts', name: 'Contact & Lead Limit', free: '100 Contacts', basic: '1,000 Records', standard: '10,000 Records', premium: 'Unlimited' },
+    { category: 'CRM & Contacts', name: 'Team User Seats', free: '1 Seat', basic: '2 Seats', standard: 'Up to 10 Seats', premium: 'Unlimited Seats' },
+    { category: 'CRM & Contacts', name: 'Task Checklist & Activity Log', free: true, basic: true, standard: true, premium: true },
+    { category: 'Sales Automation', name: 'Visual Deals Pipeline Kanban', free: false, basic: true, standard: true, premium: true },
+    { category: 'Sales Automation', name: 'Drag & Drop Stage Velocity', free: false, basic: false, standard: true, premium: true },
+    { category: 'Sales Automation', name: 'Expected Close Date Forecasts', free: false, basic: false, standard: true, premium: true },
+    { category: 'Communications', name: 'Email & Note Logging Hub', free: true, basic: true, standard: true, premium: true },
+    { category: 'Communications', name: 'VoIP Call Logging & Duration', free: false, basic: false, standard: true, premium: true },
+    { category: 'Communications', name: 'Calendar & Meeting Scheduler', free: false, basic: false, standard: true, premium: true },
+    { category: 'Customer Support', name: 'Support Tickets Desk', free: false, basic: true, standard: true, premium: true },
+    { category: 'Customer Support', name: 'Ticket SLA & Priority Routing', free: false, basic: false, standard: true, premium: true },
+    { category: 'Analytics & AI', name: 'Real-Time Reports & Metric Cards', free: false, basic: 'Basic', standard: 'Full Suite', premium: 'Full Suite + Exports' },
+    { category: 'Analytics & AI', name: 'Gemini AI Win Likelihood Scoring', free: false, basic: false, standard: false, premium: true },
+    { category: 'Analytics & AI', name: 'Automated Churn Risk Detection', free: false, basic: false, standard: false, premium: true },
+    { category: 'Media & Cloud Storage', name: 'CDN Media & Document Vault', free: '100 MB', basic: '1 GB', standard: '15 GB', premium: 'Unlimited' },
+    { category: 'Security & Scale', name: 'Multi-Tenant Data Isolation', free: true, basic: true, standard: true, premium: true },
+    { category: 'Security & Scale', name: 'Custom Company Branding', free: false, basic: false, standard: false, premium: true },
+    { category: 'Security & Scale', name: 'Support SLA', free: 'Community', basic: 'Email (24h)', standard: 'Priority (12h)', premium: 'Dedicated VIP (1h)' },
   ];
 
   return (
@@ -86,7 +85,6 @@ export const PricingPage: React.FC = () => {
       <Navbar
         onOpenLogin={() => { setAuthMode('login'); setAuthModalOpen(true); }}
         onOpenSignup={() => { setAuthMode('signup'); setAuthModalOpen(true); }}
-        onOpenDemo={() => setDemoModalOpen(true)}
       />
 
       <main className="flex-1 pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
@@ -161,9 +159,9 @@ export const PricingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* The 3 Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-20">
-          {(['starter', 'growth', 'enterprise'] as PlanTier[]).map((tier, idx) => {
+        {/* The 4 Pricing Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch mb-20">
+          {CANONICAL_PLANS.map((tier, idx) => {
             const plan = SAAS_PLANS[tier];
             const price = currency === 'INR'
               ? (billingCycle === 'annual' ? plan.priceAnnualINR : plan.priceMonthlyINR)
@@ -176,16 +174,16 @@ export const PricingPage: React.FC = () => {
                 key={tier}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className={`rounded-3xl p-7 lg:p-8 flex flex-col justify-between transition-all duration-300 relative ${
+                transition={{ duration: 0.4, delay: idx * 0.08 }}
+                className={`rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 relative ${
                   plan.popular
-                    ? 'bg-[#0D2218] text-[#FAF6F0] shadow-2xl ring-4 ring-[#0D2218]/20 md:-translate-y-2'
+                    ? 'bg-[#0D2218] text-[#FAF6F0] shadow-2xl ring-4 ring-[#0D2218]/20 lg:-translate-y-2'
                     : 'bg-white text-[#151A18] border border-[#0D2218]/12 shadow-md hover:shadow-xl'
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#BA5D38] text-white text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 fill-current" />
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#BA5D38] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap">
+                    <Sparkles className="w-3 h-3 fill-current" />
                     Most Popular Choice
                   </div>
                 )}
@@ -193,52 +191,59 @@ export const PricingPage: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className={`text-xs font-bold uppercase tracking-wider ${plan.popular ? 'text-[#BA5D38]' : 'text-[#BA5D38]'}`}>
+                      <span className={`text-[11px] font-bold uppercase tracking-wider ${plan.popular ? 'text-[#C5A059]' : 'text-[#BA5D38]'}`}>
                         {plan.badge}
                       </span>
-                      <h3 className="text-2xl font-extrabold tracking-tight mt-1">
+                      <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mt-1">
                         {plan.name}
                       </h3>
                     </div>
                     {isCurrent && (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                         Current Plan
                       </span>
                     )}
                   </div>
 
-                  <p className={`text-xs mt-2 min-h-[36px] ${plan.popular ? 'text-[#FAF6F0]/75' : 'text-[#5C6862]'}`}>
+                  <p className={`text-xs mt-2 min-h-[42px] leading-relaxed ${plan.popular ? 'text-[#FAF6F0]/75' : 'text-[#5C6862]'}`}>
                     {plan.description}
                   </p>
 
                   {/* Price display */}
-                  <div className="mt-6 pb-6 border-b border-current/10">
+                  <div className="mt-5 pb-5 border-b border-current/10">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl lg:text-5xl font-extrabold tracking-tight">
-                        {currency === 'INR' ? `₹${price.toLocaleString()}` : `$${price}`}
+                      <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                        {price === 0 ? 'Free' : (currency === 'INR' ? `₹${price.toLocaleString()}` : `$${price}`)}
                       </span>
-                      <span className={`text-xs font-semibold ${plan.popular ? 'text-[#FAF6F0]/70' : 'text-[#5C6862]'}`}>
-                        /{billingCycle === 'annual' ? 'year' : 'month'}
-                      </span>
+                      {price > 0 && (
+                        <span className={`text-xs font-semibold ${plan.popular ? 'text-[#FAF6F0]/70' : 'text-[#5C6862]'}`}>
+                          /{billingCycle === 'annual' ? 'year' : 'month'}
+                        </span>
+                      )}
                     </div>
-                    {billingCycle === 'annual' && (
-                      <p className={`text-[11px] mt-1 font-medium ${plan.popular ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                    {price > 0 && billingCycle === 'annual' && (
+                      <p className={`text-[10px] mt-1 font-medium ${plan.popular ? 'text-emerald-400' : 'text-emerald-700'}`}>
                         Billed annually (includes 2 months free!)
+                      </p>
+                    )}
+                    {price === 0 && (
+                      <p className={`text-[10px] mt-1 font-medium ${plan.popular ? 'text-[#FAF6F0]/60' : 'text-[#5C6862]'}`}>
+                        Zero setup fees · No card required
                       </p>
                     )}
                   </div>
 
                   {/* Highlights */}
-                  <div className="py-6 space-y-3">
-                    <div className="text-xs font-extrabold uppercase tracking-wider text-current/80">
+                  <div className="py-5 space-y-2.5">
+                    <div className="text-[11px] font-extrabold uppercase tracking-wider text-current/80">
                       What's Included:
                     </div>
                     {plan.features.map((feat, fIdx) => (
-                      <div key={fIdx} className="flex items-start gap-2.5 text-xs font-medium">
+                      <div key={fIdx} className="flex items-start gap-2 text-xs font-medium">
                         <div className={`p-0.5 rounded-full mt-0.5 shrink-0 ${plan.popular ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <Check className="w-3 h-3 stroke-[3]" />
                         </div>
-                        <span className={plan.popular ? 'text-[#FAF6F0]/90' : 'text-[#1F2623]'}>
+                        <span className={`leading-snug ${plan.popular ? 'text-[#FAF6F0]/90' : 'text-[#1F2623]'}`}>
                           {feat}
                         </span>
                       </div>
@@ -251,17 +256,17 @@ export const PricingPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleSelectPlan(tier)}
-                    className={`w-full py-3.5 px-6 rounded-2xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow cursor-pointer active:scale-[0.98] ${
+                    className={`w-full py-3 px-4 rounded-2xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow cursor-pointer active:scale-[0.98] ${
                       plan.popular
                         ? 'bg-[#FAF6F0] text-[#0D2218] hover:bg-white hover:shadow-lg'
                         : 'bg-[#0D2218] text-[#FAF6F0] hover:bg-[#163827]'
                     }`}
                   >
-                    <span>{isCurrent ? 'Extend / Manage Plan' : `Get Started with ${plan.name}`}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>{isCurrent ? 'Extend Plan' : (price === 0 ? 'Start Free' : `Get ${plan.name}`)}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
-                  <p className={`text-center text-[10px] mt-2.5 ${plan.popular ? 'text-[#FAF6F0]/60' : 'text-[#5C6862]'}`}>
-                    Instant activation via Razorpay · Cancel anytime
+                  <p className={`text-center text-[9px] mt-2 ${plan.popular ? 'text-[#FAF6F0]/60' : 'text-[#5C6862]'}`}>
+                    {price === 0 ? 'Instant account activation' : 'Razorpay 1-click checkout · Cancel anytime'}
                   </p>
                 </div>
               </motion.div>
@@ -276,63 +281,76 @@ export const PricingPage: React.FC = () => {
               Comprehensive Feature Comparison
             </h2>
             <p className="text-sm text-[#5C6862] mt-1">
-              Compare features side by side to choose what your team requires.
+              Compare all four tiers side by side to choose what fits your workflow and scale.
             </p>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[650px]">
               <thead>
                 <tr className="border-b-2 border-[#0D2218]/15">
-                  <th className="py-4 px-4 font-extrabold text-[#0D2218] w-2/5 text-sm">Feature</th>
-                  <th className="py-4 px-4 font-extrabold text-[#0D2218] w-1/5 text-center text-sm">Starter</th>
-                  <th className="py-4 px-4 font-extrabold text-[#BA5D38] w-1/5 text-center text-sm bg-[#0D2218]/5 rounded-t-xl">Growth</th>
-                  <th className="py-4 px-4 font-extrabold text-[#0D2218] w-1/5 text-center text-sm">Enterprise</th>
+                  <th className="py-4 px-3 font-extrabold text-[#0D2218] w-2/6 text-xs sm:text-sm">Feature</th>
+                  <th className="py-4 px-3 font-extrabold text-[#0D2218] w-1/6 text-center text-xs sm:text-sm">Free</th>
+                  <th className="py-4 px-3 font-extrabold text-[#0D2218] w-1/6 text-center text-xs sm:text-sm">Basic (₹1k)</th>
+                  <th className="py-4 px-3 font-extrabold text-[#BA5D38] w-1/6 text-center text-xs sm:text-sm bg-[#0D2218]/5 rounded-t-xl">Standard (₹2,999)</th>
+                  <th className="py-4 px-3 font-extrabold text-[#0D2218] w-1/6 text-center text-xs sm:text-sm">Premium (₹4,999)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0D2218]/8">
                 {comparisonRows.map((row, rIdx) => (
                   <tr key={rIdx} className="hover:bg-[#FAF6F0]/50 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-[#1F2623]">
-                      <span className="text-[10px] uppercase tracking-wider text-[#5C6862] block font-mono">
+                    <td className="py-3 px-3 font-bold text-[#1F2623]">
+                      <span className="text-[9px] uppercase tracking-wider text-[#5C6862] block font-mono">
                         {row.category}
                       </span>
                       {row.name}
                     </td>
 
-                    <td className="py-3.5 px-4 text-center">
-                      {typeof row.starter === 'boolean' ? (
-                        row.starter ? (
-                          <Check className="w-4 h-4 text-emerald-600 mx-auto stroke-[3]" />
+                    <td className="py-3 px-3 text-center">
+                      {typeof (row as any).free === 'boolean' ? (
+                        (row as any).free ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600 mx-auto stroke-[3]" />
                         ) : (
-                          <XIcon className="w-4 h-4 text-gray-300 mx-auto" />
+                          <XIcon className="w-3.5 h-3.5 text-gray-300 mx-auto" />
                         )
                       ) : (
-                        <span className="font-semibold text-[#0D2218]">{row.starter}</span>
+                        <span className="font-semibold text-[#0D2218]">{(row as any).free}</span>
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4 text-center bg-[#0D2218]/5">
-                      {typeof row.growth === 'boolean' ? (
-                        row.growth ? (
-                          <Check className="w-4 h-4 text-emerald-600 mx-auto stroke-[3]" />
+                    <td className="py-3 px-3 text-center">
+                      {typeof (row as any).basic === 'boolean' ? (
+                        (row as any).basic ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600 mx-auto stroke-[3]" />
                         ) : (
-                          <XIcon className="w-4 h-4 text-gray-300 mx-auto" />
+                          <XIcon className="w-3.5 h-3.5 text-gray-300 mx-auto" />
                         )
                       ) : (
-                        <span className="font-bold text-[#BA5D38]">{row.growth}</span>
+                        <span className="font-semibold text-[#0D2218]">{(row as any).basic}</span>
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4 text-center">
-                      {typeof row.enterprise === 'boolean' ? (
-                        row.enterprise ? (
-                          <Check className="w-4 h-4 text-emerald-600 mx-auto stroke-[3]" />
+                    <td className="py-3 px-3 text-center bg-[#0D2218]/5">
+                      {typeof (row as any).standard === 'boolean' ? (
+                        (row as any).standard ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600 mx-auto stroke-[3]" />
                         ) : (
-                          <XIcon className="w-4 h-4 text-gray-300 mx-auto" />
+                          <XIcon className="w-3.5 h-3.5 text-gray-300 mx-auto" />
                         )
                       ) : (
-                        <span className="font-semibold text-[#0D2218]">{row.enterprise}</span>
+                        <span className="font-bold text-[#BA5D38]">{(row as any).standard}</span>
+                      )}
+                    </td>
+
+                    <td className="py-3 px-3 text-center">
+                      {typeof (row as any).premium === 'boolean' ? (
+                        (row as any).premium ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600 mx-auto stroke-[3]" />
+                        ) : (
+                          <XIcon className="w-3.5 h-3.5 text-gray-300 mx-auto" />
+                        )
+                      ) : (
+                        <span className="font-semibold text-[#0D2218]">{(row as any).premium}</span>
                       )}
                     </td>
                   </tr>
@@ -481,17 +499,6 @@ export const PricingPage: React.FC = () => {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         initialMode={authMode}
-      />
-
-      {/* Demo Modal */}
-      <DemoModal
-        isOpen={demoModalOpen}
-        onClose={() => setDemoModalOpen(false)}
-        onOpenSignup={() => {
-          setDemoModalOpen(false);
-          setAuthMode('signup');
-          setAuthModalOpen(true);
-        }}
       />
     </div>
   );

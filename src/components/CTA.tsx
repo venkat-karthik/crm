@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Check } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
+import ctaCityImg from '../assets/images/cta_cinematic_city_1790601393970.jpg';
 
 interface CTAProps {
   onOpenSignup: () => void;
-  onOpenDemo: () => void;
 }
 
-export const CTA: React.FC<CTAProps> = ({ onOpenSignup, onOpenDemo }) => {
+export const CTA: React.FC<CTAProps> = ({ onOpenSignup }) => {
   return (
     <section
       id="cta"
@@ -16,12 +16,15 @@ export const CTA: React.FC<CTAProps> = ({ onOpenSignup, onOpenDemo }) => {
       {/* Background Image with Cinematic Depth & dark forest green layered vignette */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <img
-          src="/src/assets/images/cta_cinematic_city_1790601393997.jpg"
+          src={ctaCityImg}
           alt="Atmospheric architectural dusk cityscape"
           referrerPolicy="no-referrer"
           onError={(e) => {
-            // fallback if timestamp suffix varies
-            (e.target as HTMLImageElement).src = '/src/assets/images/cta_cinematic_city_1790601393970.jpg';
+            const target = e.target as HTMLImageElement;
+            if (!target.dataset.fallbackTried) {
+              target.dataset.fallbackTried = 'true';
+              target.src = '/assets/images/cta_cinematic_city_1790601393970.jpg';
+            }
           }}
           className="w-full h-full object-cover object-center filter saturate-[0.8] brightness-[0.4] scale-105"
         />
@@ -83,20 +86,10 @@ export const CTA: React.FC<CTAProps> = ({ onOpenSignup, onOpenDemo }) => {
         >
           <button
             onClick={onOpenSignup}
-            className="w-full sm:w-auto group inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-semibold text-[#07150E] bg-[#FAF6F0] hover:bg-[#C5A059] rounded-full transition-all duration-200 shadow-xl active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto group inline-flex items-center justify-center gap-2.5 px-9 py-4 text-base font-semibold text-[#07150E] bg-[#FAF6F0] hover:bg-[#C5A059] rounded-full transition-all duration-200 shadow-xl active:scale-[0.98] cursor-pointer"
           >
             <span>Get Started Free</span>
             <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </button>
-
-          <button
-            onClick={onOpenDemo}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-medium text-[#FAF6F0] bg-white/10 hover:bg-white/15 border border-[#FAF6F0]/20 rounded-full transition-all duration-200 backdrop-blur-sm cursor-pointer"
-          >
-            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[#C5A059]">
-              <Play className="w-3 h-3 fill-current ml-0.5" />
-            </div>
-            <span>Watch Demo</span>
           </button>
         </motion.div>
 

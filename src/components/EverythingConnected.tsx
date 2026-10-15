@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
   ArrowRight,
 } from 'lucide-react';
+import connectedOfficeImg from '../assets/images/connected_office_lifestyle_1790601362384.jpg';
 
 interface EverythingConnectedProps {
   onSelectFeature?: (featureName: string) => void;
@@ -161,9 +162,16 @@ export const EverythingConnected: React.FC<EverythingConnectedProps> = ({
             {/* Lifestyle Image in left/bottom area */}
             <div className="relative rounded-2xl overflow-hidden border border-[#0D2218]/12 shadow-lg group">
               <img
-                src="/src/assets/images/connected_office_lifestyle_1790601362384.jpg"
+                src={connectedOfficeImg}
                 alt="Collaborative architectural studio office"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.dataset.fallbackTried) {
+                    target.dataset.fallbackTried = 'true';
+                    target.src = '/assets/images/connected_office_lifestyle_1790601362384.jpg';
+                  }
+                }}
                 className="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-105 filter saturate-[0.95]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0D2218]/85 via-[#0D2218]/25 to-transparent" />
