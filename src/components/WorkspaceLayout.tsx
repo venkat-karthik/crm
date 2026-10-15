@@ -183,15 +183,15 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* User Badge, Invite Code Trigger & Plan Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Cloudinary CDN Media Manager Trigger Button */}
+          {/* Media & Digital Asset Vault Button */}
           <button
             type="button"
             onClick={() => setShowCloudinaryModal(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF6F0] hover:bg-[#0D2218] hover:text-white text-[#0D2218] border border-[#0D2218]/15 text-xs font-extrabold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
-            title="Open Cloudinary Media & Photos CDN"
+            title="Open Digital Media & Assets Storage"
           >
             <Cloud className="w-3.5 h-3.5 text-[#3448C5]" />
-            <span className="hidden md:inline">Cloudinary CDN</span>
+            <span className="hidden md:inline">Media & Assets</span>
           </button>
 
           {/* Founder Invite Codes Trigger Button */}
@@ -348,7 +348,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
           {/* Bottom Sidebar Hub */}
           <div className="pt-3 border-t border-[#0D2218]/10 space-y-2.5">
-            {/* Cloudinary CDN Media Access */}
+            {/* Media & Digital Asset Access */}
             <button
               type="button"
               onClick={() => {
@@ -359,7 +359,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             >
               <div className="flex items-center gap-2">
                 <Cloud className="w-4 h-4 text-[#3448C5]" />
-                <span>Cloudinary CDN Assets</span>
+                <span>Media & Digital Assets</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-[#5C6862]" />
             </button>
@@ -407,7 +407,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <div className="px-1 flex items-center justify-between text-[11px] text-[#5C6862] font-semibold">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                Firebase Live
+                Live Cloud Sync
               </span>
               <NavLink to="/" className="text-[#BA5D38] hover:underline font-bold text-[10px]">
                 Website

@@ -48,7 +48,7 @@ export const SAAS_PLANS: Record<PlanTier, PlanConfig> = {
       '1 Team User Seat',
       'Core Task & Follow-up Checklist',
       'Basic Activity & Communication Logs',
-      'Daily Data Backup to Cloud Firestore',
+      'Daily Automated Cloud Backups',
       'Standard Email Support',
     ],
     highlightFeatures: [

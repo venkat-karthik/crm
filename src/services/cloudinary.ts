@@ -182,6 +182,51 @@ export const cloudinaryService = {
 
     const payloadName = options.name || (fileOrBase64 instanceof File ? fileOrBase64.name : `asset_${Date.now()}`);
 
+    const env = (import.meta as any).env || {};
+    const viteCloudName = env.VITE_CLOUDINARY_CLOUD_NAME;
+    const viteUploadPreset = env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    // 1. Direct client-side Cloudinary upload (best for static Vercel deployments)
+    if (viteCloudName && viteUploadPreset) {
+      try {
+        const formData = new FormData();
+        if (fileOrBase64 instanceof File) {
+          formData.append('file', fileOrBase64);
+        } else {
+          formData.append('file', dataUrl);
+        }
+        formData.append('upload_preset', viteUploadPreset);
+        if (options.folder) formData.append('folder', options.folder);
+
+        const directRes = await fetch(`https://api.cloudinary.com/v1_1/${viteCloudName}/image/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (directRes.ok) {
+          const resData = await directRes.json();
+          const asset: CloudinaryAsset = {
+            id: resData.asset_id || `cld_${Date.now()}`,
+            publicId: resData.public_id || `kairoo_crm/${Date.now()}`,
+            name: payloadName,
+            url: resData.secure_url || resData.url,
+            secureUrl: resData.secure_url || resData.url,
+            format: resData.format || 'jpg',
+            width: resData.width,
+            height: resData.height,
+            bytes: resData.bytes,
+            category: options.category || 'general',
+            uploadedAt: resData.created_at || new Date().toISOString(),
+          };
+          this.saveAsset(asset);
+          return asset;
+        }
+      } catch (directErr) {
+        console.warn('Direct Cloudinary client upload failed, checking server-side proxy:', directErr);
+      }
+    }
+
+    // 2. Server-side proxy upload (for environments with Express server.ts running)
     try {
       const response = await fetch('/api/cloudinary/upload', {
         method: 'POST',

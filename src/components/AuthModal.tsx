@@ -119,7 +119,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </h3>
               <p className="text-xs font-medium text-[#5C6862] mt-1">
                 {mode === 'signup'
-                  ? 'Real-time multi-tenant CRM · Firebase Auth & Firestore'
+                  ? 'Real-time multi-tenant CRM · End-to-End Encrypted'
                   : 'Access your team pipeline, deals, and reports'}
               </p>
             </div>
@@ -278,10 +278,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </form>
 
-            {/* Security trust footnote */}
             <div className="mt-5 pt-4 border-t border-[#0D2218]/10 flex items-center justify-center gap-2 text-[11px] text-[#5C6862] font-semibold">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Firebase Auth & Firestore 256-bit encryption</span>
+              <span>Enterprise SSL & 256-bit End-to-End Encryption</span>
             </div>
           </div>
         </motion.div>

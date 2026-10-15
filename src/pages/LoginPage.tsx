@@ -92,7 +92,7 @@ export const LoginPage: React.FC = () => {
           <div className="text-center mb-6">
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#0D2218]/5 text-[#0D2218] mb-2">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Firebase Secured Auth
+              Enterprise Secure Access
             </span>
             <h1 className="text-3xl font-extrabold text-[#0D2218] tracking-tight mb-1">
               Sign In to Workspace

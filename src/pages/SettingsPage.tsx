@@ -148,7 +148,7 @@ Thank you for powering your business with Kairoo!`;
     setCldToast(null);
     try {
       await cloudinaryService.syncLocalPhotosToCloudinary();
-      setCldToast('All 4 CRM showcase photos successfully uploaded and synchronized with Cloudinary CDN!');
+      setCldToast('All 4 CRM showcase photos successfully uploaded and synchronized with Cloud Storage!');
       setTimeout(() => setCldToast(null), 4000);
     } catch (err) {
       console.error(err);
@@ -230,7 +230,7 @@ Thank you for powering your business with Kairoo!`;
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#5C6862]">Database Engine:</span>
-                  <span className="font-extrabold text-[#0D2218]">Google Cloud Firestore</span>
+                  <span className="font-extrabold text-[#0D2218]">Distributed Cloud Database (Encrypted)</span>
                 </div>
               </div>
             </div>
@@ -500,19 +500,19 @@ Thank you for powering your business with Kairoo!`;
           </div>
         </form>
 
-        {/* Cloudinary CDN & Media Asset Storage Card */}
+        {/* Cloud Media & Digital Asset Storage Card */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#0D2218]/10 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#3448C5]/10 text-[#3448C5] mb-2">
                 <Cloud className="w-3.5 h-3.5 fill-current" />
-                Cloudinary CDN & Image Storage
+                Cloud Media & Digital Asset Storage
               </div>
               <h3 className="text-sm font-extrabold text-[#0D2218] flex items-center gap-2">
                 <span>Media Delivery, Dynamic Transformations & Auto-WebP</span>
               </h3>
               <p className="text-xs font-medium text-[#5C6862] mt-0.5">
-                Connected Cloudinary cloud: <span className="font-mono text-[#0D2218] font-bold">kairoo-crm</span> with real-time compression, format negotiation, and CDN edge delivery.
+                High-performance edge CDN media distribution with auto-format optimization, real-time compression, and secure asset delivery.
               </p>
             </div>
 
@@ -547,8 +547,8 @@ Thank you for powering your business with Kairoo!`;
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
             <div className="p-3 bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/10 text-center">
-              <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">Cloud Account</span>
-              <span className="text-xs font-mono font-extrabold text-[#0D2218]">kairoo-crm</span>
+              <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">Storage Node</span>
+              <span className="text-xs font-mono font-extrabold text-[#0D2218]">Edge CDN (Global)</span>
             </div>
             <div className="p-3 bg-[#FAF6F0] rounded-2xl border border-[#0D2218]/10 text-center">
               <span className="text-[10px] font-extrabold uppercase text-[#5C6862] block">Auto Format</span>
@@ -573,7 +573,7 @@ Thank you for powering your business with Kairoo!`;
               <span>Database Persistence & Maintenance</span>
             </h3>
             <p className="text-xs font-medium text-[#5C6862]">
-              Kairoo stores all CRM customer profiles, deals, calls, and tickets in Google Cloud Firestore with real-time updates.
+              Kairoo stores all CRM customer profiles, deals, calls, and tickets in secure, real-time distributed cloud storage.
             </p>
           </div>
 

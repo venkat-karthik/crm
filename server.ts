@@ -447,7 +447,10 @@ app.post('/api/cloudinary/sync-crm-photos', async (req: Request, res: Response) 
     const hasLiveKeys = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
 
     for (const item of imageFiles) {
-      const filePath = path.join(imagesDir, item.file);
+      let filePath = path.join(imagesDir, item.file);
+      if (!fs.existsSync(filePath)) {
+        filePath = path.join(process.cwd(), 'src/assets/images', item.file);
+      }
       let dataUrl = `/assets/images/${item.file}`;
 
       if (fs.existsSync(filePath)) {

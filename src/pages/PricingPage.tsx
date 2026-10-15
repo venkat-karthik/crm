@@ -53,7 +53,7 @@ export const PricingPage: React.FC = () => {
     },
     {
       q: 'Is my business and customer data secure?',
-      a: 'Yes. All data is isolated per tenant and encrypted in Google Cloud Firestore with strict multi-tenant access controls and TLS 1.3 encryption in transit.',
+      a: 'Yes. All data is isolated per tenant and encrypted in our enterprise cloud database with strict multi-tenant access controls and TLS 1.3 encryption in transit.',
     },
     {
       q: 'What is the cancellation policy?',
@@ -76,7 +76,7 @@ export const PricingPage: React.FC = () => {
     { category: 'Analytics & AI', name: 'Real-Time Reports & Metric Cards', starter: 'Basic', growth: 'Full Suite', enterprise: 'Full Suite + Exports' },
     { category: 'Analytics & AI', name: 'Gemini AI Win Likelihood Scoring', starter: false, growth: false, enterprise: true },
     { category: 'Analytics & AI', name: 'Automated Churn Risk Detection', starter: false, growth: false, enterprise: true },
-    { category: 'Security & Scale', name: 'Multi-Tenant Firestore Isolation', starter: true, growth: true, enterprise: true },
+    { category: 'Security & Scale', name: 'Multi-Tenant Data Isolation', starter: true, growth: true, enterprise: true },
     { category: 'Security & Scale', name: 'Custom Company Branding', starter: false, growth: false, enterprise: true },
     { category: 'Security & Scale', name: 'Support SLA', starter: 'Email (48h)', growth: 'Priority (12h)', enterprise: 'Dedicated VIP (1h)' },
   ];
@@ -351,7 +351,7 @@ export const PricingPage: React.FC = () => {
             <div>
               <h4 className="font-extrabold text-sm text-[#0D2218]">Multi-Tenant Isolation</h4>
               <p className="text-xs text-[#5C6862] mt-1">
-                Your customer data is completely isolated in Firestore with ABAC rules.
+                Your customer data is completely isolated with role-based and attribute-based security rules.
               </p>
             </div>
           </div>
@@ -373,9 +373,9 @@ export const PricingPage: React.FC = () => {
               <Lock className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h4 className="font-extrabold text-sm text-[#0D2218]">Firebase Auth Shield</h4>
+              <h4 className="font-extrabold text-sm text-[#0D2218]">Enterprise Auth Shield</h4>
               <p className="text-xs text-[#5C6862] mt-1">
-                Google OAuth and email verification safeguards against spoofing.
+                Single sign-on, multi-factor support, and email verification safeguard against spoofing.
               </p>
             </div>
           </div>

@@ -28,7 +28,7 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
   isOpen,
   onClose,
   onSelectImage,
-  title = 'Cloudinary CDN Asset Manager',
+  title = 'Digital Asset & Media Manager',
   category = 'general',
 }) => {
   const [assets, setAssets] = useState<CloudinaryAsset[]>([]);
@@ -57,10 +57,10 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
     try {
       const updated = await cloudinaryService.syncLocalPhotosToCloudinary();
       setAssets(updated);
-      setSyncToast('All 4 CRM showcase photos successfully uploaded and synchronized with Cloudinary!');
+      setSyncToast('All 4 CRM showcase photos successfully uploaded and synchronized with Cloud Storage!');
       setTimeout(() => setSyncToast(null), 4500);
     } catch (err) {
-      console.error('Failed to sync CRM photos to Cloudinary:', err);
+      console.error('Failed to sync CRM photos:', err);
     } finally {
       setSyncingPhotos(false);
     }
@@ -134,10 +134,10 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#3448C5] text-white">
                 <Cloud className="w-3.5 h-3.5 fill-current" />
-                Cloudinary CDN Integrated
+                Enterprise CDN Storage
               </span>
               <span className="text-xs text-[#FAF6F0]/70 font-mono">
-                Auto WebP · Global CDN Delivery
+                Auto WebP · Global Edge Delivery
               </span>
             </div>
 
@@ -145,7 +145,7 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
               {title}
             </h2>
             <p className="text-xs text-[#FAF6F0]/80 mt-1 max-w-xl">
-              Upload, optimize, and manage CRM assets, customer documents, team avatars, and showcase photos with Cloudinary.
+              Upload, optimize, and manage CRM assets, customer documents, team avatars, and showcase photos across global CDN edge.
             </p>
           </div>
 
@@ -187,7 +187,7 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
                 onClick={handleSyncCrmPhotos}
                 disabled={syncingPhotos}
                 className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-[#0D2218] hover:text-white text-[#0D2218] border border-[#0D2218]/15 text-xs font-extrabold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-                title="Sync and upload existing CRM showcase photos into Cloudinary"
+                title="Sync and optimize CRM showcase photos to Cloud Storage"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${syncingPhotos ? 'animate-spin' : ''}`} />
                 <span>{syncingPhotos ? 'Syncing...' : 'Sync CRM Photos'}</span>
@@ -232,7 +232,7 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
                 Drag and drop your photos here, or click "Upload Image" above
               </div>
               <p className="text-[11px] text-[#5C6862] mt-1">
-                Optimized on-the-fly with Cloudinary: auto-converted to WebP with responsive compression.
+                Optimized on-the-fly: auto-converted to WebP with responsive compression.
               </p>
             </div>
 
@@ -316,7 +316,7 @@ export const CloudinaryMediaManager: React.FC<CloudinaryMediaManagerProps> = ({
           <div className="p-4 bg-[#FAF6F0] border-t border-[#0D2218]/10 flex items-center justify-between text-xs text-[#5C6862]">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Cloudinary CDN Assets Stored & Encrypted</span>
+              <span>Cloud Media Assets Stored & 256-bit Encrypted</span>
             </div>
             <button
               onClick={onClose}
