@@ -41,6 +41,7 @@ import { usePlanAccess } from '../hooks/usePlanAccess';
 import { RazorpayModal } from './RazorpayModal';
 import { InviteManagerModal } from './InviteManagerModal';
 import { CloudinaryMediaManager } from './CloudinaryMediaManager';
+import { PlanProgressWidget } from './PlanProgressWidget';
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -421,33 +422,19 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               </button>
             )}
 
-            {/* Plan Card for Founder */}
+            {/* Plan Quota & Progress in Sidebar */}
             {isFounderOrManager && (
               !sidebarCollapsed ? (
-                <div className="bg-white/80 rounded-2xl p-3 border border-[#0D2218]/10 shadow-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-extrabold uppercase text-[#5C6862]">Billing Tier</span>
-                    <span className="text-[10px] font-extrabold text-[#BA5D38] capitalize">{currentPlan} Plan</span>
-                  </div>
-                  <p className="text-[11px] text-[#2D3632] font-medium leading-snug">
-                    {planInfo.tagline}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowRazorpayModal(true)}
-                    className="w-full mt-2 py-1.5 px-3 bg-[#0D2218] hover:bg-[#163827] text-white text-[11px] font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
-                  >
-                    <Zap className="w-3 h-3 text-[#C5A059] fill-current" />
-                    <span>{currentPlan === 'enterprise' ? 'Billing & Invoices' : 'Upgrade Plan'}</span>
-                  </button>
-                </div>
+                <PlanProgressWidget
+                  variant="sidebar"
+                  onOpenUpgrade={() => setShowRazorpayModal(true)}
+                />
               ) : (
                 <button
                   type="button"
                   onClick={() => setShowRazorpayModal(true)}
-                  title={`Current Plan: ${currentPlan}. Click to upgrade/view billing`}
-                  className="w-full p-2.5 bg-[#0D2218] text-[#C5A059] rounded-xl flex items-center justify-center cursor-pointer shadow-xs"
+                  title={`Current Plan: ${currentPlan}. Click to view quota progress & billing`}
+                  className="w-full p-2.5 bg-[#0D2218] text-[#C5A059] rounded-xl flex items-center justify-center cursor-pointer shadow-xs hover:scale-105 transition-transform"
                 >
                   <Zap className="w-4 h-4 fill-current" />
                 </button>

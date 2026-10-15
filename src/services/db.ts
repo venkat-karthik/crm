@@ -133,6 +133,9 @@ export interface Communication {
   type: 'Call' | 'Email' | 'Meeting' | 'Note';
   subject: string;
   content: string;
+  recipient?: string;
+  sentViaSmtp?: boolean;
+  deliveryStatus?: string;
   relatedCustomer?: string;
   relatedLead?: string;
   author: string;

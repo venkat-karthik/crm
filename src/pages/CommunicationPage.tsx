@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
+  Eye,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +26,10 @@ export const CommunicationPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All' | Communication['type']>('All');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null);
+
+  // Email Preview and Inspection
+  const [composeTab, setComposeTab] = useState<'compose' | 'preview'>('compose');
+  const [inspectingEmail, setInspectingEmail] = useState<Communication | null>(null);
 
   // Google SMTP Status
   const [smtpStatus, setSmtpStatus] = useState<{
@@ -79,6 +84,7 @@ export const CommunicationPage: React.FC = () => {
 
   const handleOpenAdd = (defaultType: Communication['type'] = 'Email') => {
     setType(defaultType);
+    setComposeTab('compose');
     setRecipientEmail('');
     setSubject('');
     setContent('');
@@ -319,15 +325,28 @@ export const CommunicationPage: React.FC = () => {
                 </p>
               )}
 
-              <div className="pl-10.5 pt-3 mt-2 border-t border-[#0D2218]/6 flex items-center gap-3 text-[11px] text-[#5C6862]">
-                {c.relatedCustomer && (
-                  <span className="flex items-center gap-1">
-                    <Building className="w-3 h-3 text-[#5C6862]" />
-                    <span className="font-semibold text-[#0D2218]">{c.relatedCustomer}</span>
-                  </span>
-                )}
-                {c.relatedLead && (
-                  <span className="text-[#BA5D38] font-medium">Lead: {c.relatedLead}</span>
+              <div className="pl-10.5 pt-3 mt-2 border-t border-[#0D2218]/6 flex items-center justify-between gap-3 text-[11px] text-[#5C6862]">
+                <div className="flex items-center gap-3 flex-wrap">
+                  {c.relatedCustomer && (
+                    <span className="flex items-center gap-1">
+                      <Building className="w-3 h-3 text-[#5C6862]" />
+                      <span className="font-semibold text-[#0D2218]">{c.relatedCustomer}</span>
+                    </span>
+                  )}
+                  {c.relatedLead && (
+                    <span className="text-[#BA5D38] font-medium">Lead: {c.relatedLead}</span>
+                  )}
+                </div>
+
+                {c.type === 'Email' && (
+                  <button
+                    type="button"
+                    onClick={() => setInspectingEmail(c)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Eye className="w-3 h-3" />
+                    <span>Preview Email</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -349,98 +368,184 @@ export const CommunicationPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold mb-1">Channel Type *</label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                  >
-                    <option value="Email">Email Dispatch</option>
-                    <option value="Call">Phone Call</option>
-                    <option value="Meeting">Executive Meeting</option>
-                    <option value="Note">Internal Strategy Note</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1">Author</label>
-                  <input
-                    type="text"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                  />
-                </div>
-              </div>
-
               {type === 'Email' && (
-                <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block font-semibold text-[#0D2218]">Recipient Email Address *</label>
-                    <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full">
-                      Google Gmail SMTP
-                    </span>
-                  </div>
-                  <input
-                    type="email"
-                    required={type === 'Email'}
-                    value={recipientEmail}
-                    onChange={(e) => setRecipientEmail(e.target.value)}
-                    placeholder="customer.recipient@company.com"
-                    className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/15 rounded-xl text-[#0D2218] focus:outline-none focus:ring-1 focus:ring-[#0D2218]"
-                  />
-                  <p className="text-[10px] text-[#5C6862]">
-                    Dispatches real email via Google SMTP (smtp.gmail.com:465) and logs interaction to timeline.
-                  </p>
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#0D2218]/10">
+                  <button
+                    type="button"
+                    onClick={() => setComposeTab('compose')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                      composeTab === 'compose' ? 'bg-[#0D2218] text-[#FAF6F0] shadow-xs' : 'text-[#5C6862]'
+                    }`}
+                  >
+                    Compose Message
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComposeTab('preview')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                      composeTab === 'preview' ? 'bg-[#0D2218] text-[#FAF6F0] shadow-xs' : 'text-[#5C6862]'
+                    }`}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Live Email Preview</span>
+                  </button>
                 </div>
               )}
 
-              <div>
-                <label className="block font-semibold mb-1">Subject / Header *</label>
-                <input
-                  type="text"
-                  required
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g. Q4 Master Service Agreement terms discussed"
-                  className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                />
-              </div>
+              {composeTab === 'preview' && type === 'Email' ? (
+                /* LIVE EMAIL PREVIEW MOCKUP */
+                <div className="bg-white rounded-2xl border border-[#0D2218]/15 shadow-sm overflow-hidden text-xs">
+                  {/* Email Client Top Bar */}
+                  <div className="bg-[#0D2218] p-3 text-white flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-[#C5A059]" />
+                      <span className="font-extrabold text-[11px] tracking-wide">
+                        Kairoo Enterprise Email Dispatch
+                      </span>
+                    </div>
+                    <span className="text-[10px] bg-white/10 text-white/90 px-2 py-0.5 rounded-full font-mono">
+                      smtp.gmail.com:465
+                    </span>
+                  </div>
 
-              <div>
-                <label className="block font-semibold mb-1">Communication Summary / Body</label>
-                <textarea
-                  rows={4}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Paste email text, meeting minutes, or key decisions..."
-                  className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                />
-              </div>
+                  {/* Header Meta */}
+                  <div className="p-4 bg-[#FAF6F0] border-b border-[#0D2218]/8 space-y-1.5 text-[11px]">
+                    <div className="flex">
+                      <span className="w-16 font-extrabold text-[#5C6862]">From:</span>
+                      <span className="font-bold text-[#0D2218]">
+                        {author} &lt;{user?.email || 'sales@company.com'}&gt;
+                      </span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-16 font-extrabold text-[#5C6862]">To:</span>
+                      <span className="font-bold text-blue-700">
+                        {recipientEmail || '(Enter recipient email in Compose tab)'}
+                      </span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-16 font-extrabold text-[#5C6862]">Subject:</span>
+                      <span className="font-extrabold text-[#0D2218]">
+                        {subject || '(No subject provided)'}
+                      </span>
+                    </div>
+                    <div className="flex">
+                      <span className="w-16 font-extrabold text-[#5C6862]">Date:</span>
+                      <span className="text-[#5C6862]">{new Date().toLocaleString()}</span>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold mb-1">Related Customer</label>
-                  <input
-                    type="text"
-                    value={relatedCustomer}
-                    onChange={(e) => setRelatedCustomer(e.target.value)}
-                    placeholder="e.g. TechNova Solutions"
-                    className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                  />
+                  {/* Body Content */}
+                  <div className="p-5 min-h-[160px] bg-white text-[#1F2623] leading-relaxed text-xs">
+                    {content ? (
+                      <div className="space-y-2 whitespace-pre-wrap">{content}</div>
+                    ) : (
+                      <p className="text-gray-400 italic">No email body entered yet...</p>
+                    )}
+
+                    <div className="mt-8 pt-4 border-t border-gray-100 text-[10px] text-gray-500">
+                      <p className="font-bold text-[#0D2218]">{author}</p>
+                      <p>{user?.company || 'Organization Lead'} · Kairoo CRM</p>
+                      <p className="mt-1 text-gray-400">Delivered securely via Google Gmail SMTP</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-semibold mb-1">Related Lead</label>
-                  <input
-                    type="text"
-                    value={relatedLead}
-                    onChange={(e) => setRelatedLead(e.target.value)}
-                    placeholder="e.g. Sovereign Capital"
-                    className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                  />
-                </div>
-              </div>
+              ) : (
+                /* EDIT FORM INPUTS */
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold mb-1">Channel Type *</label>
+                      <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value as any)}
+                        className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
+                      >
+                        <option value="Email">Email Dispatch</option>
+                        <option value="Call">Phone Call</option>
+                        <option value="Meeting">Executive Meeting</option>
+                        <option value="Note">Internal Strategy Note</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Author</label>
+                      <input
+                        type="text"
+                        value={author}
+                        onChange={(e) => setAuthor(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
+                      />
+                    </div>
+                  </div>
+
+                  {type === 'Email' && (
+                    <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block font-semibold text-[#0D2218]">Recipient Email Address *</label>
+                        <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full">
+                          Google Gmail SMTP
+                        </span>
+                      </div>
+                      <input
+                        type="email"
+                        required={type === 'Email'}
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                        placeholder="customer.recipient@company.com"
+                        className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/15 rounded-xl text-[#0D2218] focus:outline-none focus:ring-1 focus:ring-[#0D2218]"
+                      />
+                      <p className="text-[10px] text-[#5C6862]">
+                        Dispatches real email via Google SMTP (smtp.gmail.com:465) and logs interaction to timeline.
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block font-semibold mb-1">Subject / Header *</label>
+                    <input
+                      type="text"
+                      required
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder="e.g. Q4 Master Service Agreement terms discussed"
+                      className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Communication Summary / Body</label>
+                    <textarea
+                      rows={4}
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder="Paste email text, meeting minutes, or key decisions..."
+                      className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold mb-1">Related Customer</label>
+                      <input
+                        type="text"
+                        value={relatedCustomer}
+                        onChange={(e) => setRelatedCustomer(e.target.value)}
+                        placeholder="e.g. TechNova Solutions"
+                        className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Related Lead</label>
+                      <input
+                        type="text"
+                        value={relatedLead}
+                        onChange={(e) => setRelatedLead(e.target.value)}
+                        placeholder="e.g. Sovereign Capital"
+                        className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="pt-3 border-t border-[#0D2218]/10 flex justify-end gap-2.5">
                 <button
@@ -450,6 +555,15 @@ export const CommunicationPage: React.FC = () => {
                 >
                   Cancel
                 </button>
+                {composeTab === 'preview' && (
+                  <button
+                    type="button"
+                    onClick={() => setComposeTab('compose')}
+                    className="px-4 py-2 bg-white border border-[#0D2218]/15 text-[#0D2218] rounded-xl font-semibold hover:bg-gray-50"
+                  >
+                    Edit Message
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={sending}
@@ -466,6 +580,71 @@ export const CommunicationPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Standalone Inspection Modal for Timeline Emails */}
+      {inspectingEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-[#0D2218]/15 shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in">
+            <div className="p-4 bg-[#0D2218] text-[#FAF6F0] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#C5A059]" />
+                <h3 className="font-extrabold text-sm">
+                  Email Dispatch Preview
+                </h3>
+              </div>
+              <button
+                onClick={() => setInspectingEmail(null)}
+                className="p-1 rounded-lg text-white/80 hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 bg-[#FAF6F0] border-b border-[#0D2218]/10 space-y-1.5 text-xs">
+              <div className="flex">
+                <span className="w-20 font-extrabold text-[#5C6862]">Sender:</span>
+                <span className="font-bold text-[#0D2218]">{inspectingEmail.author}</span>
+              </div>
+              {inspectingEmail.recipient && (
+                <div className="flex">
+                  <span className="w-20 font-extrabold text-[#5C6862]">Recipient:</span>
+                  <span className="font-bold text-blue-700">{inspectingEmail.recipient}</span>
+                </div>
+              )}
+              <div className="flex">
+                <span className="w-20 font-extrabold text-[#5C6862]">Subject:</span>
+                <span className="font-extrabold text-[#0D2218]">{inspectingEmail.subject}</span>
+              </div>
+              <div className="flex">
+                <span className="w-20 font-extrabold text-[#5C6862]">Timestamp:</span>
+                <span className="text-[#5C6862]">
+                  {new Date(inspectingEmail.createdAt).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white text-xs leading-relaxed text-[#1F2623] min-h-[180px] max-h-[360px] overflow-y-auto">
+              <p className="whitespace-pre-wrap">{inspectingEmail.content}</p>
+
+              <div className="mt-8 pt-4 border-t border-gray-100 text-[10px] text-gray-500">
+                <p className="font-bold text-[#0D2218]">{inspectingEmail.author}</p>
+                <p>Kairoo CRM Communication Records</p>
+                <p className="mt-1 text-gray-400">Authenticated Google SMTP Transcript</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#FAF6F0] border-t border-[#0D2218]/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setInspectingEmail(null)}
+                className="px-5 py-2 bg-[#0D2218] text-white rounded-xl text-xs font-extrabold hover:bg-[#163827] cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

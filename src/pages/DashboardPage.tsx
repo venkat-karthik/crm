@@ -4,6 +4,8 @@ import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { db, Customer, Deal, Task, Ticket, Organization, isMasterFounder, MASTER_FOUNDER_EMAIL } from '../services/db';
 import { useAuth } from '../context/AuthContext';
 import { InviteManagerModal } from '../components/InviteManagerModal';
+import { PlanProgressWidget } from '../components/PlanProgressWidget';
+import { RazorpayModal } from '../components/RazorpayModal';
 import {
   Users,
   Target,
@@ -38,6 +40,7 @@ export const DashboardPage: React.FC = () => {
   const [customers, setCustomers] = useState(db.getCustomers());
   const [tickets, setTickets] = useState(db.getTickets());
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Role detection - Only karthikvenkat316@gmail.com is Master Founder with all executive features
   const isMaster = isMasterFounder(user);
@@ -412,6 +415,9 @@ export const DashboardPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Plan Quota & Progress Tracker */}
+      <PlanProgressWidget onOpenUpgrade={() => setShowUpgradeModal(true)} />
+
       {/* 6 Real Database KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {kpis.map((kpi) => {
@@ -584,6 +590,11 @@ export const DashboardPage: React.FC = () => {
       <InviteManagerModal
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
+      />
+
+      <RazorpayModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
       />
     </WorkspaceLayout>
   );
