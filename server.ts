@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { v2 as cloudinary } from 'cloudinary';
+import nodemailer from 'nodemailer';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -511,6 +512,165 @@ app.post('/api/cloudinary/sync-crm-photos', async (req: Request, res: Response) 
   }
 });
 
+// ==============================================================================
+// GOOGLE GMAIL SMTP SERVICE & COMMUNICATION DISPATCH
+// ==============================================================================
+const getSmtpTransporter = () => {
+  const user = process.env.GOOGLE_SMTP_USER || process.env.SMTP_USER;
+  const rawPass = process.env.GOOGLE_SMTP_APP_PASSWORD || process.env.SMTP_PASS || '';
+  const pass = rawPass.replace(/\s+/g, ''); // strip spaces from Google app passwords
+
+  if (!user || !pass) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: Number(process.env.SMTP_PORT) === 587 ? false : true,
+    auth: {
+      user,
+      pass,
+    },
+  });
+};
+
+// Check Google SMTP configuration status & health
+app.get('/api/email/status', async (req: Request, res: Response) => {
+  const user = process.env.GOOGLE_SMTP_USER || process.env.SMTP_USER;
+  const rawPass = process.env.GOOGLE_SMTP_APP_PASSWORD || process.env.SMTP_PASS || '';
+  const isConfigured = !!(user && rawPass);
+
+  if (!isConfigured) {
+    return res.json({
+      configured: false,
+      provider: 'Google Gmail SMTP',
+      host: 'smtp.gmail.com',
+      port: 465,
+      hint: 'Configure GOOGLE_SMTP_USER and GOOGLE_SMTP_APP_PASSWORD in environment variables',
+    });
+  }
+
+  try {
+    const transporter = getSmtpTransporter();
+    if (transporter) {
+      await transporter.verify();
+      return res.json({
+        configured: true,
+        verified: true,
+        user,
+        provider: 'Google Gmail SMTP (smtp.gmail.com:465)',
+      });
+    }
+  } catch (err: any) {
+    return res.json({
+      configured: true,
+      verified: false,
+      user,
+      error: err.message || 'SMTP authentication failed. Verify your Google App Password.',
+    });
+  }
+
+  return res.json({ configured: false });
+});
+
+// Dispatch real email via Google SMTP & record on CRM timeline
+app.post('/api/email/send', async (req: Request, res: Response) => {
+  try {
+    const {
+      to,
+      subject,
+      content,
+      customerName,
+      relatedCustomerId,
+      relatedLeadId,
+      senderName = 'Kairoo CRM',
+    } = req.body;
+
+    if (!to || !subject || !content) {
+      return res.status(400).json({ error: 'Recipient (to), subject, and content are required.' });
+    }
+
+    const transporter = getSmtpTransporter();
+    const senderEmail = process.env.GOOGLE_SMTP_USER || process.env.SMTP_USER || 'no-reply@kairoocrm.com';
+    let messageId = `msg_${Date.now()}`;
+    let sentViaSmtp = false;
+    let smtpError: string | null = null;
+
+    if (transporter) {
+      try {
+        const info = await transporter.sendMail({
+          from: `"${senderName}" <${senderEmail}>`,
+          to,
+          subject,
+          text: content.replace(/<[^>]*>?/gm, ''),
+          html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #151A18; line-height: 1.6;">
+            <div style="background-color: #0D2218; padding: 20px 24px; border-radius: 12px 12px 0 0;">
+              <h2 style="color: #FAF6F0; margin: 0; font-size: 18px; font-weight: 700;">${senderName}</h2>
+            </div>
+            <div style="background-color: #FFFFFF; border: 1px solid #E5E7EB; border-top: none; padding: 24px; border-radius: 0 0 12px 12px;">
+              <p style="font-size: 15px; margin-top: 0; color: #1F2623;">${content.replace(/\n/g, '<br/>')}</p>
+              <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0 16px 0;" />
+              <p style="font-size: 12px; color: #6B7280; margin: 0;">
+                Sent via Kairoo CRM · Google Gmail SMTP Integration
+              </p>
+            </div>
+          </div>`,
+        });
+        messageId = info.messageId || messageId;
+        sentViaSmtp = true;
+      } catch (err: any) {
+        console.error('Google SMTP delivery failed:', err);
+        smtpError = err.message || 'SMTP transmission failure';
+      }
+    }
+
+    // Record on CRM communication timeline in persistent storage
+    const currentDb = loadDB();
+    const now = new Date().toISOString();
+    const newComm = {
+      id: generateId('comm'),
+      type: 'Email',
+      subject,
+      content,
+      recipient: to,
+      author: senderName,
+      relatedCustomer: customerName || relatedCustomerId || '',
+      relatedLead: relatedLeadId || '',
+      sentViaSmtp,
+      deliveryStatus: sentViaSmtp ? 'Delivered' : (smtpError ? 'Failed' : 'Draft / Recorded'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    currentDb.communications.unshift(newComm);
+    currentDb.activity_logs.unshift({
+      id: generateId('act'),
+      entityType: 'communications',
+      entityId: newComm.id,
+      action: sentViaSmtp ? 'Email Sent' : 'Email Logged',
+      description: sentViaSmtp
+        ? `Delivered email to ${to}: "${subject}" via Google SMTP`
+        : `Logged email to ${to}: "${subject}"`,
+      createdAt: now,
+    });
+    saveDB(currentDb);
+
+    return res.json({
+      success: true,
+      sentViaSmtp,
+      messageId,
+      communication: newComm,
+      warning: !sentViaSmtp
+        ? (smtpError || 'Google SMTP not configured. Communication saved to CRM timeline.')
+        : undefined,
+    });
+  } catch (err: any) {
+    console.error('Email handling error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error while sending email.' });
+  }
+});
+
 // --- GENERIC ENTITY HELPER BUILDER ---
 function registerCrud(
   collectionName: keyof DatabaseSchema,
@@ -772,7 +932,9 @@ export async function startServer() {
   });
 }
 
-// Start server
-startServer();
+// Start server (only in persistent Node/dev environment, not inside Vercel serverless functions)
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 export default app;

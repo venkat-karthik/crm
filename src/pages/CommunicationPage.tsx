@@ -12,6 +12,9 @@ import {
   Send,
   X,
   Building,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -21,16 +24,44 @@ export const CommunicationPage: React.FC = () => {
   const [comms, setComms] = useState<Communication[]>(db.getCommunications());
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All' | Communication['type']>('All');
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null);
+
+  // Google SMTP Status
+  const [smtpStatus, setSmtpStatus] = useState<{
+    configured: boolean;
+    verified?: boolean;
+    user?: string;
+    provider?: string;
+    error?: string;
+  } | null>(null);
+  const [checkingSmtp, setCheckingSmtp] = useState(false);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [type, setType] = useState<Communication['type']>('Email');
+  const [recipientEmail, setRecipientEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [relatedCustomer, setRelatedCustomer] = useState('');
   const [relatedLead, setRelatedLead] = useState('');
   const [author, setAuthor] = useState(user?.name || 'Account Lead');
+  const [sending, setSending] = useState(false);
+
+  const checkSmtpHealth = async () => {
+    setCheckingSmtp(true);
+    try {
+      const res = await fetch('/api/email/status');
+      if (res.ok) {
+        const data = await res.json();
+        setSmtpStatus(data);
+      }
+    } catch (e) {
+      // Backend not running on this origin or offline
+      setSmtpStatus({ configured: false });
+    } finally {
+      setCheckingSmtp(false);
+    }
+  };
 
   const loadData = () => {
     setComms(db.getCommunications());
@@ -38,15 +69,17 @@ export const CommunicationPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    checkSmtpHealth();
   }, []);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+  const showToast = (message: string, toastType: 'success' | 'warning' | 'error' = 'success') => {
+    setToast({ message, type: toastType });
+    setTimeout(() => setToast(null), 4000);
   };
 
   const handleOpenAdd = (defaultType: Communication['type'] = 'Email') => {
     setType(defaultType);
+    setRecipientEmail('');
     setSubject('');
     setContent('');
     setRelatedCustomer('');
@@ -55,22 +88,73 @@ export const CommunicationPage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject) return;
 
-    db.saveCommunication({
-      type,
-      subject,
-      content,
-      relatedCustomer,
-      relatedLead,
-      author,
-    });
+    if (type === 'Email' && recipientEmail) {
+      setSending(true);
+      try {
+        const response = await fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: recipientEmail,
+            subject,
+            content,
+            customerName: relatedCustomer,
+            senderName: author,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.sentViaSmtp) {
+            showToast(`Email dispatched successfully via Google SMTP to ${recipientEmail}!`, 'success');
+          } else {
+            showToast(result.warning || 'Logged email to CRM. Configure GOOGLE_SMTP_USER & GOOGLE_SMTP_APP_PASSWORD to send live.', 'warning');
+          }
+        } else {
+          // Fallback to local CRM record
+          db.saveCommunication({
+            type,
+            subject,
+            content: `[To: ${recipientEmail}] ${content}`,
+            relatedCustomer,
+            relatedLead,
+            author,
+          });
+          showToast(`Logged communication. (Google SMTP service endpoint responded with status ${response.status})`, 'warning');
+        }
+      } catch (err) {
+        // Fallback local save
+        db.saveCommunication({
+          type,
+          subject,
+          content: `[To: ${recipientEmail}] ${content}`,
+          relatedCustomer,
+          relatedLead,
+          author,
+        });
+        showToast(`Email recorded on timeline. Set Google SMTP credentials in .env to deliver real emails.`, 'warning');
+      } finally {
+        setSending(false);
+      }
+    } else {
+      // Non-email or note/meeting/call logging
+      db.saveCommunication({
+        type,
+        subject,
+        content,
+        relatedCustomer,
+        relatedLead,
+        author,
+      });
+      showToast(`${type} logged to customer timeline.`, 'success');
+    }
 
     loadData();
     setModalOpen(false);
-    showToast(`${type} logged to customer timeline.`);
   };
 
   const filtered = comms.filter((c) => {
@@ -119,12 +203,51 @@ export const CommunicationPage: React.FC = () => {
         </div>
       }
     >
+      {/* Toast Notification */}
       {toast && (
-        <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between">
-          <span>{toast}</span>
+        <div
+          className={`mb-4 p-3 rounded-xl border text-xs font-semibold flex items-center justify-between ${
+            toast.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : toast.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            )}
+            <span>{toast.message}</span>
+          </div>
           <X className="w-4 h-4 cursor-pointer" onClick={() => setToast(null)} />
         </div>
       )}
+
+      {/* Google Gmail SMTP Status Pill / Banner */}
+      <div className="mb-4 bg-white px-4 py-2.5 rounded-2xl border border-[#0D2218]/10 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-2.5 h-2.5 rounded-full ${smtpStatus?.configured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+          <span className="text-xs font-extrabold text-[#0D2218]">
+            Google Gmail SMTP:
+          </span>
+          <span className="text-xs text-[#5C6862]">
+            {smtpStatus?.configured
+              ? `Connected (${smtpStatus.user || 'smtp.gmail.com:465'})`
+              : 'Log Mode (Set GOOGLE_SMTP_USER & GOOGLE_SMTP_APP_PASSWORD in .env for live email delivery)'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={checkSmtpHealth}
+          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#BA5D38] hover:underline cursor-pointer"
+        >
+          <RefreshCw className={`w-3 h-3 ${checkingSmtp ? 'animate-spin' : ''}`} />
+          <span>Check Connection</span>
+        </button>
+      </div>
 
       {/* Filter Tabs & Search */}
       <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between shadow-xs">
@@ -247,10 +370,31 @@ export const CommunicationPage: React.FC = () => {
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-[#0D2218]/15 rounded-xl text-[#0D2218]"
-                  >
-                  </input>
+                  />
                 </div>
               </div>
+
+              {type === 'Email' && (
+                <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-semibold text-[#0D2218]">Recipient Email Address *</label>
+                    <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full">
+                      Google Gmail SMTP
+                    </span>
+                  </div>
+                  <input
+                    type="email"
+                    required={type === 'Email'}
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    placeholder="customer.recipient@company.com"
+                    className="w-full px-3 py-2 bg-[#FAF6F0] border border-[#0D2218]/15 rounded-xl text-[#0D2218] focus:outline-none focus:ring-1 focus:ring-[#0D2218]"
+                  />
+                  <p className="text-[10px] text-[#5C6862]">
+                    Dispatches real email via Google SMTP (smtp.gmail.com:465) and logs interaction to timeline.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block font-semibold mb-1">Subject / Header *</label>
@@ -302,15 +446,23 @@ export const CommunicationPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border rounded-xl"
+                  className="px-4 py-2 border rounded-xl hover:bg-gray-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#0D2218] text-[#FAF6F0] rounded-xl font-semibold hover:bg-[#163827]"
+                  disabled={sending}
+                  className="px-5 py-2 bg-[#0D2218] hover:bg-[#163827] text-[#FAF6F0] rounded-xl font-semibold flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
                 >
-                  Save Log
+                  {sending && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>
+                    {sending
+                      ? 'Sending via Google SMTP...'
+                      : type === 'Email'
+                      ? 'Send via Google SMTP'
+                      : 'Save Log'}
+                  </span>
                 </button>
               </div>
             </form>

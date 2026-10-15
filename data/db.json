@@ -1,0 +1,38 @@
+{
+  "users": [],
+  "customers": [],
+  "leads": [],
+  "deals": [],
+  "tasks": [],
+  "calls": [],
+  "communications": [
+    {
+      "id": "comm_1792056573740_xwh3o7",
+      "type": "Email",
+      "subject": "Welcome to Kairoo CRM",
+      "content": "Hello from Kairoo CRM!",
+      "recipient": "test@example.com",
+      "author": "Kairoo CRM",
+      "relatedCustomer": "Acme Corp",
+      "relatedLead": "",
+      "sentViaSmtp": false,
+      "deliveryStatus": "Draft / Recorded",
+      "createdAt": "2026-10-15T09:29:33.740Z",
+      "updatedAt": "2026-10-15T09:29:33.740Z"
+    }
+  ],
+  "appointments": [],
+  "tickets": [],
+  "ticket_messages": [],
+  "notifications": [],
+  "activity_logs": [
+    {
+      "id": "act_1792056573740_ejr58o",
+      "entityType": "communications",
+      "entityId": "comm_1792056573740_xwh3o7",
+      "action": "Email Logged",
+      "description": "Logged email to test@example.com: \"Welcome to Kairoo CRM\"",
+      "createdAt": "2026-10-15T09:29:33.740Z"
+    }
+  ]
+}

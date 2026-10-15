@@ -31,6 +31,8 @@ import {
   Briefcase,
   Layers,
   Cloud,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { KairooLogo } from './KairooLogo';
 import { useAuth } from '../context/AuthContext';
@@ -65,6 +67,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCloudinaryModal, setShowCloudinaryModal] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // User role category - Only karthikvenkat316@gmail.com is Master Founder with full feature access
   const isMaster = isMasterFounder(user);
@@ -141,13 +144,24 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     <div className="min-h-screen bg-[#FAF6F0] text-[#151A18] flex flex-col font-sans selection:bg-[#0D2218] selection:text-[#FAF6F0]">
       {/* Top Application Bar */}
       <header className="h-16 bg-[#FAF6F0] border-b border-[#0D2218]/10 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md">
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
             className="md:hidden p-2 text-[#0D2218] hover:bg-[#0D2218]/5 rounded-lg"
             aria-label="Toggle menu"
           >
             {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          {/* Desktop Sidebar Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden md:inline-flex p-2 text-[#5C6862] hover:text-[#0D2218] hover:bg-[#0D2218]/8 rounded-xl transition-all cursor-pointer"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label="Toggle sidebar"
+          >
+            {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4 text-[#0D2218]" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
 
           <NavLink to="/dashboard" className="flex items-center gap-2">
@@ -288,16 +302,26 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       {/* Main Framework: Sidebar + Canvas */}
       <div className="flex-1 flex overflow-hidden">
         {/* Workspace Sidebar (Desktop) */}
-        <aside className="w-64 bg-[#F4EFE6] border-r border-[#0D2218]/10 p-3 hidden md:flex flex-col justify-between shrink-0 overflow-y-auto">
+        <aside
+          className={`${
+            sidebarCollapsed ? 'w-16 p-2' : 'w-64 p-3'
+          } transition-all duration-200 bg-[#F4EFE6] border-r border-[#0D2218]/10 hidden md:flex flex-col justify-between shrink-0 overflow-y-auto`}
+        >
           <div>
-            <div className="px-3 py-2 mb-2 flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5C6862]">
-                {isClient ? 'Client Hub' : isEmployee ? 'Employee Workspace' : 'Enterprise Suite'}
-              </span>
-              <span className="text-[9px] font-extrabold bg-[#0D2218] text-[#FAF6F0] px-2 py-0.5 rounded tracking-wider uppercase">
-                {user?.role || 'Founder'}
-              </span>
-            </div>
+            {!sidebarCollapsed ? (
+              <div className="px-3 py-2 mb-2 flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5C6862]">
+                  {isClient ? 'Client Hub' : isEmployee ? 'Employee Workspace' : 'Enterprise Suite'}
+                </span>
+                <span className="text-[9px] font-extrabold bg-[#0D2218] text-[#FAF6F0] px-2 py-0.5 rounded tracking-wider uppercase">
+                  {user?.role || 'Founder'}
+                </span>
+              </div>
+            ) : (
+              <div className="py-2 mb-1 flex justify-center">
+                <span className="w-2 h-2 rounded-full bg-[#0D2218]" title={user?.role || 'Founder'} />
+              </div>
+            )}
 
             <nav className="space-y-1">
               {navItems.map((item) => {
@@ -310,7 +334,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                    title={sidebarCollapsed ? item.name : undefined}
+                    className={`flex items-center ${
+                      sidebarCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
+                    } rounded-xl text-xs font-bold transition-all ${
                       isActive
                         ? 'bg-[#0D2218] text-[#FAF6F0] shadow-sm'
                         : isLocked
@@ -320,30 +347,32 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#C5A059]' : 'text-[#5C6862]'}`} />
-                      <span className="truncate">{item.name}</span>
+                      {!sidebarCollapsed && <span className="truncate">{item.name}</span>}
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {isLocked && (
-                        <span title={`Requires ${access.requirement?.minPlan} plan`}>
-                          <Lock className="w-3.5 h-3.5 text-amber-700/80" />
-                        </span>
-                      )}
+                    {!sidebarCollapsed && (
+                      <div className="flex items-center gap-1.5">
+                        {isLocked && (
+                          <span title={`Requires ${access.requirement?.minPlan} plan`}>
+                            <Lock className="w-3.5 h-3.5 text-amber-700/80" />
+                          </span>
+                        )}
 
-                      {item.badge ? (
-                        <span
-                          className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                            isActive ? 'bg-[#FAF6F0]/20 text-[#FAF6F0]' : 'bg-[#BA5D38]/15 text-[#BA5D38]'
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
-                      ) : item.count && item.count > 0 ? (
-                        <span className="text-[9px] font-extrabold bg-[#BA5D38] text-white px-1.5 py-0.5 rounded-full">
-                          {item.count}
-                        </span>
-                      ) : null}
-                    </div>
+                        {item.badge ? (
+                          <span
+                            className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                              isActive ? 'bg-[#FAF6F0]/20 text-[#FAF6F0]' : 'bg-[#BA5D38]/15 text-[#BA5D38]'
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        ) : item.count && item.count > 0 ? (
+                          <span className="text-[9px] font-extrabold bg-[#BA5D38] text-white px-1.5 py-0.5 rounded-full">
+                            {item.count}
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
                   </NavLink>
                 );
               })}
@@ -351,7 +380,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           </div>
 
           {/* Bottom Sidebar Hub */}
-          <div className="pt-3 border-t border-[#0D2218]/10 space-y-2.5">
+          <div className="pt-3 border-t border-[#0D2218]/10 space-y-2">
             {/* Media & Digital Asset Access */}
             <button
               type="button"
@@ -359,13 +388,16 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 setShowCloudinaryModal(true);
                 setMobileSidebarOpen(false);
               }}
-              className="w-full p-2.5 bg-white border border-[#0D2218]/12 rounded-xl hover:border-[#0D2218]/30 flex items-center justify-between text-left text-xs font-extrabold text-[#0D2218] shadow-xs cursor-pointer"
+              title="Media & Digital Assets"
+              className={`w-full ${
+                sidebarCollapsed ? 'p-2.5 justify-center' : 'p-2.5 justify-between'
+              } bg-white border border-[#0D2218]/12 rounded-xl hover:border-[#0D2218]/30 flex items-center text-left text-xs font-extrabold text-[#0D2218] shadow-xs cursor-pointer`}
             >
               <div className="flex items-center gap-2">
-                <Cloud className="w-4 h-4 text-[#3448C5]" />
-                <span>Media & Digital Assets</span>
+                <Cloud className="w-4 h-4 text-[#3448C5] shrink-0" />
+                {!sidebarCollapsed && <span>Media & Digital Assets</span>}
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-[#5C6862]" />
+              {!sidebarCollapsed && <ChevronRight className="w-3.5 h-3.5 text-[#5C6862]" />}
             </button>
 
             {/* Founder Invite Codes Quick Access */}
@@ -376,45 +408,58 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   setShowInviteModal(true);
                   setMobileSidebarOpen(false);
                 }}
-                className="w-full p-2.5 bg-white border border-[#0D2218]/12 rounded-xl hover:border-[#0D2218]/30 flex items-center justify-between text-left text-xs font-extrabold text-[#0D2218] shadow-xs cursor-pointer"
+                title="Team & Client Codes"
+                className={`w-full ${
+                  sidebarCollapsed ? 'p-2.5 justify-center' : 'p-2.5 justify-between'
+                } bg-white border border-[#0D2218]/12 rounded-xl hover:border-[#0D2218]/30 flex items-center text-left text-xs font-extrabold text-[#0D2218] shadow-xs cursor-pointer`}
               >
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-[#BA5D38]" />
-                  <span>Team & Client Codes</span>
+                  <KeyRound className="w-4 h-4 text-[#BA5D38] shrink-0" />
+                  {!sidebarCollapsed && <span>Team & Client Codes</span>}
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-[#5C6862]" />
+                {!sidebarCollapsed && <ChevronRight className="w-3.5 h-3.5 text-[#5C6862]" />}
               </button>
             )}
 
             {/* Plan Card for Founder */}
             {isFounderOrManager && (
-              <div className="bg-white/80 rounded-2xl p-3 border border-[#0D2218]/10 shadow-xs">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-extrabold uppercase text-[#5C6862]">Billing Tier</span>
-                  <span className="text-[10px] font-extrabold text-[#BA5D38] capitalize">{currentPlan} Plan</span>
-                </div>
-                <p className="text-[11px] text-[#2D3632] font-medium leading-snug">
-                  {planInfo.tagline}
-                </p>
+              !sidebarCollapsed ? (
+                <div className="bg-white/80 rounded-2xl p-3 border border-[#0D2218]/10 shadow-xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-extrabold uppercase text-[#5C6862]">Billing Tier</span>
+                    <span className="text-[10px] font-extrabold text-[#BA5D38] capitalize">{currentPlan} Plan</span>
+                  </div>
+                  <p className="text-[11px] text-[#2D3632] font-medium leading-snug">
+                    {planInfo.tagline}
+                  </p>
 
+                  <button
+                    type="button"
+                    onClick={() => setShowRazorpayModal(true)}
+                    className="w-full mt-2 py-1.5 px-3 bg-[#0D2218] hover:bg-[#163827] text-white text-[11px] font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  >
+                    <Zap className="w-3 h-3 text-[#C5A059] fill-current" />
+                    <span>{currentPlan === 'enterprise' ? 'Billing & Invoices' : 'Upgrade Plan'}</span>
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
                   onClick={() => setShowRazorpayModal(true)}
-                  className="w-full mt-2 py-1.5 px-3 bg-[#0D2218] hover:bg-[#163827] text-white text-[11px] font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  title={`Current Plan: ${currentPlan}. Click to upgrade/view billing`}
+                  className="w-full p-2.5 bg-[#0D2218] text-[#C5A059] rounded-xl flex items-center justify-center cursor-pointer shadow-xs"
                 >
-                  <Zap className="w-3 h-3 text-[#C5A059] fill-current" />
-                  <span>{currentPlan === 'enterprise' ? 'Billing & Invoices' : 'Upgrade Plan'}</span>
+                  <Zap className="w-4 h-4 fill-current" />
                 </button>
-              </div>
+              )
             )}
 
-            <div className="px-1 flex items-center justify-between text-[11px] text-[#5C6862] font-semibold">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                Live Cloud Sync
-              </span>
-              <NavLink to="/" className="text-[#BA5D38] hover:underline font-bold text-[10px]">
-                Website
+            <div className={`px-1 pt-1 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} text-[11px] text-[#5C6862] font-semibold`}>
+              {!sidebarCollapsed && (
+                <span className="text-[10px] text-[#5C6862]">Kairoo Workspace</span>
+              )}
+              <NavLink to="/" className="text-[#BA5D38] hover:underline font-bold text-[10px]" title="Visit Landing Page">
+                {sidebarCollapsed ? 'Web' : 'Website'}
               </NavLink>
             </div>
           </div>
