@@ -18,6 +18,8 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { PipelineFunnelVisualizer } from '../components/PipelineFunnelVisualizer';
 
 const STAGES: Deal['stage'][] = [
   'New Lead',
@@ -225,6 +227,11 @@ export const PipelinePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Visual Deal Conversion Funnel */}
+      <div className="mb-6">
+        <PipelineFunnelVisualizer deals={deals} dealsLabel="Pipeline Opportunities" />
+      </div>
+
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between shadow-xs">
         <div className="relative flex-1 max-w-sm">
@@ -296,82 +303,112 @@ export const PipelinePage: React.FC = () => {
                       <p className="text-[11px] text-[#5C6862]">No deals in {stg}</p>
                     </div>
                   ) : (
-                    stageDeals.map((deal) => (
-                      <div
-                        key={deal.id}
-                        className="bg-white p-3.5 rounded-xl border border-[#0D2218]/10 shadow-xs hover:border-[#BA5D38]/50 hover:shadow-md transition-all group relative"
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] font-semibold text-[#5C6862] truncate">
-                            {deal.contact}
-                          </span>
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF6F0] border border-[#0D2218]/8 text-[#0D2218]">
-                            {deal.tag || 'Deal'}
-                          </span>
-                        </div>
+                    stageDeals.map((deal, cardIdx) => {
+                      const prob =
+                        stg === 'Won' ? 100 :
+                        stg === 'Negotiation' ? 85 :
+                        stg === 'Proposal' ? 70 :
+                        stg === 'Interested' ? 50 :
+                        stg === 'Contacted' ? 35 :
+                        stg === 'New Lead' ? 20 : 0;
 
-                        <h4 className="text-xs font-bold text-[#0D2218] mb-1 leading-snug">
-                          {deal.name}
-                        </h4>
-
-                        <div className="flex items-center gap-1.5 text-[11px] text-[#5C6862] mb-2.5">
-                          <Building className="w-3 h-3 text-[#5C6862]" />
-                          <span className="truncate">{deal.company}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t border-[#0D2218]/8">
-                          <span className="font-serif text-sm font-bold text-[#0D2218] tabular-nums">
-                            ₹{deal.value.toLocaleString()}
-                          </span>
-                          <span className="text-[10px] font-mono text-[#5C6862]">
-                            {deal.expectedCloseDate}
-                          </span>
-                        </div>
-
-                        {/* Move / Quick Action Bar */}
-                        <div className="mt-2.5 pt-2 border-t border-dashed border-[#0D2218]/8 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1">
-                            {/* Prev stage button */}
-                            {STAGES.indexOf(stg) > 0 && (
-                              <button
-                                onClick={() => handleMoveStage(deal, STAGES[STAGES.indexOf(stg) - 1])}
-                                className="p-1 hover:bg-[#FAF6F0] text-[#5C6862] rounded"
-                                title="Move to previous stage"
-                              >
-                                <ChevronLeft className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            {/* Next stage button */}
-                            {STAGES.indexOf(stg) < STAGES.length - 1 && (
-                              <button
-                                onClick={() => handleMoveStage(deal, STAGES[STAGES.indexOf(stg) + 1])}
-                                className="p-1 hover:bg-[#FAF6F0] text-[#0D2218] rounded"
-                                title="Move to next stage"
-                              >
-                                <ChevronRight className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                      return (
+                        <motion.div
+                          key={deal.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: Math.min(cardIdx * 0.04, 0.25) }}
+                          whileHover={{ y: -3, scale: 1.01, transition: { duration: 0.15 } }}
+                          className="bg-white p-3.5 rounded-2xl border border-[#0D2218]/10 shadow-xs hover:border-[#BA5D38]/50 hover:shadow-md transition-all group relative"
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-semibold text-[#5C6862] truncate">
+                              {deal.contact}
+                            </span>
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FAF6F0] border border-[#0D2218]/8 text-[#0D2218]">
+                              {deal.tag || 'Deal'}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleOpenEdit(deal)}
-                              className="p-1 text-[#5C6862] hover:text-[#0D2218] rounded"
-                              title="Edit deal"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(deal.id, deal.name)}
-                              className="p-1 text-[#5C6862] hover:text-red-700 rounded"
-                              title="Delete deal"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
+                          <h4 className="text-xs font-bold text-[#0D2218] mb-1 leading-snug group-hover:text-[#BA5D38] transition-colors">
+                            {deal.name}
+                          </h4>
+
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#5C6862] mb-2.5">
+                            <Building className="w-3 h-3 text-[#5C6862]" />
+                            <span className="truncate">{deal.company}</span>
                           </div>
-                        </div>
-                      </div>
-                    ))
+
+                          {/* Visual Probability Meter */}
+                          <div className="mb-2.5 pt-1">
+                            <div className="flex items-center justify-between text-[10px] font-semibold mb-1 text-[#5C6862]">
+                              <span>Win Probability</span>
+                              <span className="font-mono text-[#0D2218]">{prob}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-[#FAF6F0] rounded-full overflow-hidden border border-[#0D2218]/8">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  prob >= 70 ? 'bg-emerald-600' : prob >= 40 ? 'bg-[#C5A059]' : 'bg-[#BA5D38]'
+                                }`}
+                                style={{ width: `${prob}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-[#0D2218]/8">
+                            <span className="font-serif text-sm font-bold text-[#0D2218] tabular-nums">
+                              ₹{deal.value.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#5C6862]">
+                              {deal.expectedCloseDate}
+                            </span>
+                          </div>
+
+                          {/* Move / Quick Action Bar */}
+                          <div className="mt-2.5 pt-2 border-t border-dashed border-[#0D2218]/8 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1">
+                              {/* Prev stage button */}
+                              {STAGES.indexOf(stg) > 0 && (
+                                <button
+                                  onClick={() => handleMoveStage(deal, STAGES[STAGES.indexOf(stg) - 1])}
+                                  className="p-1 hover:bg-[#FAF6F0] text-[#5C6862] rounded cursor-pointer transition-transform active:scale-95"
+                                  title="Move to previous stage"
+                                >
+                                  <ChevronLeft className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {/* Next stage button */}
+                              {STAGES.indexOf(stg) < STAGES.length - 1 && (
+                                <button
+                                  onClick={() => handleMoveStage(deal, STAGES[STAGES.indexOf(stg) + 1])}
+                                  className="p-1 hover:bg-[#0D2218] hover:text-white text-[#0D2218] bg-[#FAF6F0] rounded cursor-pointer transition-transform active:scale-95"
+                                  title="Advance to next stage"
+                                >
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleOpenEdit(deal)}
+                                className="p-1 text-[#5C6862] hover:text-[#0D2218] rounded cursor-pointer"
+                                title="Edit deal"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(deal.id, deal.name)}
+                                className="p-1 text-[#5C6862] hover:text-red-700 rounded cursor-pointer"
+                                title="Delete deal"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })
                   )}
                 </div>
               </div>

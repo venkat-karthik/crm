@@ -33,6 +33,7 @@ import {
   Cloud,
   PanelLeftClose,
   PanelLeftOpen,
+  Webhook,
 } from 'lucide-react';
 import { KairooLogo } from './KairooLogo';
 import { useAuth } from '../context/AuthContext';
@@ -106,6 +107,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     { name: 'Support Tickets', path: '/tickets', icon: LifeBuoy, visibleFor: ['founder', 'employee', 'client'] },
     { name: 'Reports & Analytics', path: '/reports', icon: BarChart3, visibleFor: ['founder'] },
     { name: 'AI Insights', path: '/ai-insights', icon: Sparkles, badge: 'AI', visibleFor: ['founder'] },
+    { name: 'Automations & API', path: '/automations', icon: Webhook, badge: 'Auto', visibleFor: ['founder', 'employee'] },
     { name: 'Notifications', path: '/notifications', icon: Bell, count: unreadNotifs, visibleFor: ['founder', 'employee', 'client'] },
     { name: 'Team & Invites', path: '/users', icon: UserCheck, visibleFor: ['founder'] },
     { name: 'Settings', path: '/settings', icon: SettingsIcon, visibleFor: ['founder', 'employee', 'client'] },
@@ -306,7 +308,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         <aside
           className={`${
             sidebarCollapsed ? 'w-16 p-2' : 'w-64 p-3'
-          } transition-all duration-200 bg-[#F4EFE6] border-r border-[#0D2218]/10 hidden md:flex flex-col justify-between shrink-0 overflow-y-auto`}
+          } transition-all duration-300 ease-in-out bg-[#F4EFE6] border-r border-[#0D2218]/10 hidden md:flex flex-col justify-between shrink-0 overflow-y-auto`}
         >
           <div>
             {!sidebarCollapsed ? (
@@ -453,72 +455,84 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         </aside>
 
         {/* Mobile Sidebar Drawer */}
-        {mobileSidebarOpen && (
-          <div className="fixed inset-0 z-40 md:hidden flex">
-            <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-xs"
-              onClick={() => setMobileSidebarOpen(false)}
-            />
-            <div className="relative w-64 max-w-[80%] bg-[#F4EFE6] h-full p-4 flex flex-col justify-between z-50 overflow-y-auto">
-              <div>
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#0D2218]/10">
-                  <KairooLogo size="sm" variant="dark" />
-                  <button
-                    onClick={() => setMobileSidebarOpen(false)}
-                    className="p-1 rounded-lg text-[#0D2218]"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <nav className="space-y-1">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    const access = checkAccess(item.path);
-                    const isLocked = !access.allowed;
+        <AnimatePresence>
+          {mobileSidebarOpen && (
+            <div className="fixed inset-0 z-40 md:hidden flex">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+                onClick={() => setMobileSidebarOpen(false)}
+              />
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 240 }}
+                className="relative w-64 max-w-[80%] bg-[#F4EFE6] h-full p-4 flex flex-col justify-between z-50 overflow-y-auto shadow-2xl"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#0D2218]/10">
+                    <KairooLogo size="sm" variant="dark" />
+                    <button
+                      onClick={() => setMobileSidebarOpen(false)}
+                      className="p-1 rounded-lg text-[#0D2218] cursor-pointer"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <nav className="space-y-1">
+                    {navItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      const access = checkAccess(item.path);
+                      const isLocked = !access.allowed;
 
-                    return (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setMobileSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold ${
-                          isActive
-                            ? 'bg-[#0D2218] text-[#FAF6F0]'
-                            : isLocked
-                            ? 'text-[#5C6862]/70 opacity-75'
-                            : 'text-[#2D3632]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon className="w-4 h-4" />
-                          <span>{item.name}</span>
-                        </div>
-                        {isLocked && <Lock className="w-3.5 h-3.5 text-amber-700" />}
-                      </NavLink>
-                    );
-                  })}
-                </nav>
-              </div>
-
-              {isFounderOrManager && (
-                <div className="pt-4 border-t border-[#0D2218]/10 space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileSidebarOpen(false);
-                      setShowInviteModal(true);
-                    }}
-                    className="w-full py-2 bg-[#0D2218] text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-1.5"
-                  >
-                    <KeyRound className="w-3.5 h-3.5 text-[#C5A059]" />
-                    <span>Invite Codes</span>
-                  </button>
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setMobileSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                            isActive
+                              ? 'bg-[#0D2218] text-[#FAF6F0]'
+                              : isLocked
+                              ? 'text-[#5C6862]/70 opacity-75'
+                              : 'text-[#2D3632] hover:bg-black/5'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className="w-4 h-4" />
+                            <span>{item.name}</span>
+                          </div>
+                          {isLocked && <Lock className="w-3.5 h-3.5 text-amber-700" />}
+                        </NavLink>
+                      );
+                    })}
+                  </nav>
                 </div>
-              )}
+
+                {isFounderOrManager && (
+                  <div className="pt-4 border-t border-[#0D2218]/10 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileSidebarOpen(false);
+                        setShowInviteModal(true);
+                      }}
+                      className="w-full py-2 bg-[#0D2218] text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-transform active:scale-95"
+                    >
+                      <KeyRound className="w-3.5 h-3.5 text-[#C5A059]" />
+                      <span>Invite Codes</span>
+                    </button>
+                  </div>
+                )}
+              </motion.div>
             </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
 
         {/* Primary Content Canvas */}
         <main className="flex-1 overflow-y-auto bg-[#FAF6F0] p-4 sm:p-6 lg:p-8">

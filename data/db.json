@@ -1,11 +1,38 @@
 {
   "users": [],
   "customers": [],
-  "leads": [],
+  "leads": [
+    {
+      "id": "lead_1792139426602_nj19qu",
+      "name": "Aarav Mehta",
+      "email": "aarav@mehtatech.com",
+      "phone": "+91 98200 12345",
+      "company": "Mehta Tech Enterprises",
+      "source": "Website Contact Form",
+      "interest": "Inbound Website Inquiry",
+      "assignedTo": "Sales Lead",
+      "status": "New Lead",
+      "notes": "Website Message: Need 25 CRM user seats for our sales floor.",
+      "createdAt": "2026-10-16T08:30:26.601Z",
+      "updatedAt": "2026-10-16T08:30:26.601Z"
+    }
+  ],
   "deals": [],
   "tasks": [],
   "calls": [],
   "communications": [
+    {
+      "id": "comm_1792139426602_0wh7ss",
+      "type": "Note",
+      "subject": "Website Inquiry from Aarav Mehta",
+      "content": "Need 25 CRM user seats for our sales floor.",
+      "recipient": "aarav@mehtatech.com",
+      "author": "Website Webhook Gateway",
+      "relatedLead": "Aarav Mehta",
+      "relatedCustomer": "Mehta Tech Enterprises",
+      "createdAt": "2026-10-16T08:30:26.601Z",
+      "updatedAt": "2026-10-16T08:30:26.601Z"
+    },
     {
       "id": "comm_1792056573740_xwh3o7",
       "type": "Email",
@@ -24,8 +51,25 @@
   "appointments": [],
   "tickets": [],
   "ticket_messages": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_1792139426602_0dmmuk",
+      "title": "⚡ New Inbound Lead Captured!",
+      "message": "Aarav Mehta (Mehta Tech Enterprises) just submitted your website contact form.",
+      "type": "lead",
+      "isRead": false,
+      "createdAt": "2026-10-16T08:30:26.601Z"
+    }
+  ],
   "activity_logs": [
+    {
+      "id": "act_1792139426602_quqsgn",
+      "entityType": "leads",
+      "entityId": "lead_1792139426602_nj19qu",
+      "action": "Automated Lead Capture",
+      "description": "Captured Aarav Mehta from Website Contact Form",
+      "createdAt": "2026-10-16T08:30:26.601Z"
+    },
     {
       "id": "act_1792056573740_ejr58o",
       "entityType": "communications",

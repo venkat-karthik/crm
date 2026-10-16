@@ -671,6 +671,288 @@ app.post('/api/email/send', async (req: Request, res: Response) => {
   }
 });
 
+// ==============================================================================
+// AUTOMATED INBOUND WEBHOOKS & INTEGRATION ENGINE
+// Ingests website leads, incoming emails, and VoIP telephony calls automatically
+// ==============================================================================
+interface WebhookLog {
+  id: string;
+  source: 'Website Form' | 'Inbound Email' | 'Telephony VoIP' | 'Zapier / Custom';
+  eventType: string;
+  summary: string;
+  status: 'Success' | 'Warning' | 'Error';
+  timestamp: string;
+  payload: any;
+}
+
+let webhookLogs: WebhookLog[] = [
+  {
+    id: 'wh_init_1',
+    source: 'Website Form',
+    eventType: 'lead.captured',
+    summary: 'Captured lead from landing page contact form (Rahul Sharma - Sovereign Real Estate)',
+    status: 'Success',
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+    payload: { name: 'Rahul Sharma', email: 'rahul@sovereignre.com', source: 'Website Contact Form' },
+  },
+  {
+    id: 'wh_init_2',
+    source: 'Inbound Email',
+    eventType: 'email.received',
+    summary: 'Matched incoming email from priya@zenithexports.in ("Enterprise Contract Terms")',
+    status: 'Success',
+    timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+    payload: { from: 'priya@zenithexports.in', subject: 'Enterprise Contract Terms' },
+  },
+];
+
+// Allow CORS for webhooks so customers' external websites can post freely
+app.use('/api/webhooks', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-api-key');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// 1. Ingest Website Leads (Web-to-Lead)
+app.post('/api/webhooks/lead', (req: Request, res: Response) => {
+  try {
+    const { name, email, phone = '', company = '', message = '', source = 'Website Inbound Form' } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required for website lead capture.' });
+    }
+
+    const currentDb = loadDB();
+    const now = new Date().toISOString();
+    const leadId = generateId('lead');
+
+    // Create or update Lead
+    const newLead = {
+      id: leadId,
+      name,
+      email,
+      phone,
+      company: company || 'Web Prospect',
+      source,
+      interest: 'Inbound Website Inquiry',
+      assignedTo: 'Sales Lead',
+      status: 'New Lead',
+      notes: message ? `Website Message: ${message}` : 'Ingested automatically via Webhook',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    currentDb.leads.unshift(newLead);
+
+    // If message provided, log to communication timeline
+    if (message) {
+      currentDb.communications.unshift({
+        id: generateId('comm'),
+        type: 'Note',
+        subject: `Website Inquiry from ${name}`,
+        content: message,
+        recipient: email,
+        author: 'Website Webhook Gateway',
+        relatedLead: name,
+        relatedCustomer: company,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    // Trigger instant notification for sales team
+    currentDb.notifications.unshift({
+      id: generateId('notif'),
+      title: '⚡ New Inbound Lead Captured!',
+      message: `${name} (${company || email}) just submitted your website contact form.`,
+      type: 'lead',
+      isRead: false,
+      createdAt: now,
+    });
+
+    currentDb.activity_logs.unshift({
+      id: generateId('act'),
+      entityType: 'leads',
+      entityId: leadId,
+      action: 'Automated Lead Capture',
+      description: `Captured ${name} from ${source}`,
+      createdAt: now,
+    });
+
+    saveDB(currentDb);
+
+    // Record webhook log
+    webhookLogs.unshift({
+      id: generateId('wh'),
+      source: 'Website Form',
+      eventType: 'lead.captured',
+      summary: `Automated Lead created for ${name} (${email})`,
+      status: 'Success',
+      timestamp: now,
+      payload: req.body,
+    });
+
+    return res.status(201).json({
+      success: true,
+      leadId,
+      message: `Lead ${name} successfully captured in Kairoo CRM.`,
+      lead: newLead,
+    });
+  } catch (err: any) {
+    console.error('Webhook lead capture error:', err);
+    return res.status(500).json({ error: err.message || 'Webhook lead capture failed' });
+  }
+});
+
+// 2. Ingest Inbound Email (Email-to-CRM)
+app.post('/api/webhooks/email', (req: Request, res: Response) => {
+  try {
+    const { from, to, subject, body, text, html } = req.body;
+    const senderEmail = from || req.body['sender'] || '';
+    const emailSubject = subject || 'Inbound Customer Email';
+    const emailContent = body || text || html || '(No body text)';
+
+    if (!senderEmail) {
+      return res.status(400).json({ error: 'Sender email (from) is required.' });
+    }
+
+    const currentDb = loadDB();
+    const now = new Date().toISOString();
+
+    // Check if customer exists with this email
+    const customer = currentDb.customers.find((c) => c.email && c.email.toLowerCase() === senderEmail.toLowerCase());
+    const lead = currentDb.leads.find((l) => l.email && l.email.toLowerCase() === senderEmail.toLowerCase());
+
+    const commId = generateId('comm');
+    const newComm = {
+      id: commId,
+      type: 'Email',
+      subject: emailSubject,
+      content: emailContent,
+      recipient: to || 'support@kairoocrm.com',
+      author: senderEmail,
+      relatedCustomer: customer ? customer.name : '',
+      relatedLead: lead ? lead.name : (!customer ? senderEmail : ''),
+      deliveryStatus: 'Inbound Delivered',
+      sentViaSmtp: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    currentDb.communications.unshift(newComm);
+
+    // Alert team of incoming customer email
+    currentDb.notifications.unshift({
+      id: generateId('notif'),
+      title: '📧 New Inbound Email Received',
+      message: `From ${senderEmail}: "${emailSubject}"`,
+      type: 'communication',
+      isRead: false,
+      createdAt: now,
+    });
+
+    saveDB(currentDb);
+
+    webhookLogs.unshift({
+      id: generateId('wh'),
+      source: 'Inbound Email',
+      eventType: 'email.received',
+      summary: `Inbound email from ${senderEmail} linked to timeline`,
+      status: 'Success',
+      timestamp: now,
+      payload: req.body,
+    });
+
+    return res.status(201).json({
+      success: true,
+      communicationId: commId,
+      message: 'Inbound email successfully ingested into CRM.',
+    });
+  } catch (err: any) {
+    console.error('Webhook inbound email error:', err);
+    return res.status(500).json({ error: err.message || 'Webhook email ingestion failed' });
+  }
+});
+
+// 3. Ingest Telephony Calls (Twilio / Exotel / VoIP Call Tracking)
+app.post('/api/webhooks/calls', (req: Request, res: Response) => {
+  try {
+    const {
+      callerNumber = '+91 98201 44829',
+      contactName = '',
+      callType = 'Inbound',
+      durationMinutes = 4,
+      status = 'Completed',
+      notes = 'Inbound telephone consultation via virtual PBX',
+      recordingUrl = '',
+      agentName = 'Sales Rep',
+    } = req.body;
+
+    const currentDb = loadDB();
+    const now = new Date().toISOString();
+    const callId = generateId('call');
+
+    const newCall = {
+      id: callId,
+      contactName: contactName || `Caller (${callerNumber})`,
+      phone: callerNumber,
+      type: callType,
+      durationMinutes: Number(durationMinutes) || 1,
+      status,
+      assignedEmployee: agentName,
+      notes: recordingUrl ? `${notes} · Audio Recording: ${recordingUrl}` : notes,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    currentDb.calls.unshift(newCall);
+
+    currentDb.notifications.unshift({
+      id: generateId('notif'),
+      title: '📞 Inbound Call Logged',
+      message: `${contactName || callerNumber} (${durationMinutes} min call - ${status})`,
+      type: 'call',
+      isRead: false,
+      createdAt: now,
+    });
+
+    saveDB(currentDb);
+
+    webhookLogs.unshift({
+      id: generateId('wh'),
+      source: 'Telephony VoIP',
+      eventType: 'call.completed',
+      summary: `${callType} call from ${callerNumber} (${durationMinutes}m) logged`,
+      status: 'Success',
+      timestamp: now,
+      payload: req.body,
+    });
+
+    return res.status(201).json({
+      success: true,
+      callId,
+      message: 'Telephony call record ingested.',
+      call: newCall,
+    });
+  } catch (err: any) {
+    console.error('Webhook call tracking error:', err);
+    return res.status(500).json({ error: err.message || 'Webhook call ingestion failed' });
+  }
+});
+
+// 4. Get Webhook Activity Logs
+app.get('/api/webhooks/logs', (req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    count: webhookLogs.length,
+    logs: webhookLogs.slice(0, 30),
+  });
+});
+
 // --- GENERIC ENTITY HELPER BUILDER ---
 function registerCrud(
   collectionName: keyof DatabaseSchema,

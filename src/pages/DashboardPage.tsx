@@ -6,6 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import { InviteManagerModal } from '../components/InviteManagerModal';
 import { PlanProgressWidget } from '../components/PlanProgressWidget';
 import { RazorpayModal } from '../components/RazorpayModal';
+import { RevenueVelocityChart } from '../components/RevenueVelocityChart';
+import { PipelineFunnelVisualizer } from '../components/PipelineFunnelVisualizer';
+import { motion } from 'framer-motion';
 import {
   Users,
   Target,
@@ -420,32 +423,48 @@ export const DashboardPage: React.FC = () => {
 
       {/* 6 Real Database KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
-        {kpis.map((kpi) => {
+        {kpis.map((kpi, idx) => {
           const Icon = kpi.icon;
           return (
-            <NavLink
+            <motion.div
               key={kpi.title}
-              to={kpi.link}
-              className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 hover:border-[#BA5D38]/40 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: idx * 0.04 }}
+              whileHover={{ y: -3, transition: { duration: 0.15 } }}
             >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-extrabold text-[#5C6862] truncate">
-                    {kpi.title}
-                  </span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-[#5C6862]/40 group-hover:text-[#BA5D38] transition-colors" />
+              <NavLink
+                to={kpi.link}
+                className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 hover:border-[#BA5D38]/40 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between h-full"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-extrabold text-[#5C6862] truncate">
+                      {kpi.title}
+                    </span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-[#5C6862]/40 group-hover:text-[#BA5D38] transition-colors" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-[#0D2218] tabular-nums tracking-tight">
+                    {kpi.value}
+                  </div>
                 </div>
-                <div className="text-2xl font-extrabold text-[#0D2218] tabular-nums tracking-tight">
-                  {kpi.value}
-                </div>
-              </div>
-              <p className="text-[10px] text-[#5C6862] mt-1 font-semibold truncate">
-                {kpi.subtext}
-              </p>
-            </NavLink>
+                <p className="text-[10px] text-[#5C6862] mt-1 font-semibold truncate">
+                  {kpi.subtext}
+                </p>
+              </NavLink>
+            </motion.div>
           );
         })}
       </div>
+
+      {/* Visual Revenue Analytics: Interactive Recharts Curve */}
+      <RevenueVelocityChart
+        totalRevenue={metrics.totalRevenue}
+        pipelineValue={metrics.pipelineValue}
+      />
+
+      {/* Visual Deal Stage Funnel Distribution */}
+      <PipelineFunnelVisualizer deals={deals} dealsLabel={dealsLabel} />
 
       {/* Middle Grid: Pipeline & Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

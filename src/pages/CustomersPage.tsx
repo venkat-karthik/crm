@@ -13,8 +13,12 @@ import {
   Check,
   X,
   UserCheck,
+  Award,
+  Users,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
-
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
 export const CustomersPage: React.FC = () => {
@@ -128,6 +132,18 @@ export const CustomersPage: React.FC = () => {
   const clientsLabel = user?.crmCustomization?.clientsLabel || 'Clients';
   const singularClient = clientsLabel.endsWith('s') ? clientsLabel.slice(0, -1) : clientsLabel;
 
+  // Visual Portfolio Metrics
+  const totalCount = customers.length;
+  const vipCount = customers.filter((c) => c.status === 'VIP').length;
+  const activeCount = customers.filter((c) => c.status === 'Active').length;
+  const leadCount = customers.filter((c) => c.status === 'Lead').length;
+  const churnedCount = customers.filter((c) => c.status === 'Churned').length;
+
+  const vipPct = totalCount ? Math.round((vipCount / totalCount) * 100) : 0;
+  const activePct = totalCount ? Math.round((activeCount / totalCount) * 100) : 0;
+  const leadPct = totalCount ? Math.round((leadCount / totalCount) * 100) : 0;
+  const churnedPct = totalCount ? Math.round((churnedCount / totalCount) * 100) : 0;
+
   return (
     <WorkspaceLayout
       title={`${clientsLabel} Directory`}
@@ -135,7 +151,7 @@ export const CustomersPage: React.FC = () => {
       actions={
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#FAF6F0] bg-[#0D2218] hover:bg-[#163827] rounded-xl shadow-xs transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#FAF6F0] bg-[#0D2218] hover:bg-[#163827] rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add {singularClient}</span>
@@ -149,6 +165,121 @@ export const CustomersPage: React.FC = () => {
           <X className="w-4 h-4 cursor-pointer" onClick={() => setToastMessage(null)} />
         </div>
       )}
+
+      {/* Visual Portfolio Health Cards with Interactive Status Filtering */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+        {[
+          { label: 'All Accounts', count: totalCount, filter: 'All', color: 'text-[#0D2218]', bg: 'bg-[#0D2218]/5', icon: Users, sub: 'total records' },
+          { label: 'Active Retainers', count: activeCount, filter: 'Active', color: 'text-emerald-800', bg: 'bg-emerald-50', icon: TrendingUp, sub: `${activePct}% portfolio` },
+          { label: 'VIP Accounts', count: vipCount, filter: 'VIP', color: 'text-[#8F6C26]', bg: 'bg-[#C5A059]/15', icon: Award, sub: `${vipPct}% enterprise` },
+          { label: 'Prospect Leads', count: leadCount, filter: 'Lead', color: 'text-[#BA5D38]', bg: 'bg-[#BA5D38]/10', icon: Sparkles, sub: `${leadPct}% in-funnel` },
+        ].map((card, idx) => {
+          const Icon = card.icon;
+          const isSelected = statusFilter === card.filter;
+          return (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.04 }}
+              onClick={() => setStatusFilter(card.filter)}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                isSelected
+                  ? 'bg-white border-[#0D2218] shadow-md ring-2 ring-[#0D2218]/10'
+                  : 'bg-white border-[#0D2218]/10 hover:border-[#0D2218]/30 shadow-xs'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-extrabold text-[#5C6862]">{card.label}</span>
+                <div className={`w-6 h-6 rounded-lg ${card.bg} ${card.color} flex items-center justify-center`}>
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-2xl font-bold font-serif tabular-nums ${card.color}`}>
+                  {card.count}
+                </span>
+                <span className="text-[10px] text-[#5C6862] font-semibold">{card.sub}</span>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Visual Proportional Segment Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs mb-6">
+        <div className="flex items-center justify-between text-xs font-semibold mb-2">
+          <span className="text-[#0D2218] flex items-center gap-1.5 font-bold">
+            <span>Portfolio Health & Segmentation</span>
+            <span className="text-[10px] text-[#5C6862] font-normal">({totalCount} relationships)</span>
+          </span>
+          <span className="text-[11px] text-[#5C6862] font-mono">
+            {vipCount + activeCount} healthy accounts
+          </span>
+        </div>
+
+        {/* Visual Segmented Stacked Progress Bar */}
+        <div className="w-full h-3 bg-[#FAF6F0] rounded-full overflow-hidden flex border border-[#0D2218]/8">
+          {activePct > 0 && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${activePct}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="h-full bg-emerald-600"
+              title={`Active: ${activeCount} (${activePct}%)`}
+            />
+          )}
+          {vipPct > 0 && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${vipPct}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.05 }}
+              className="h-full bg-[#C5A059]"
+              title={`VIP: ${vipCount} (${vipPct}%)`}
+            />
+          )}
+          {leadPct > 0 && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${leadPct}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
+              className="h-full bg-[#BA5D38]"
+              title={`Lead: ${leadCount} (${leadPct}%)`}
+            />
+          )}
+          {churnedPct > 0 && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${churnedPct}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.15 }}
+              className="h-full bg-gray-400"
+              title={`Churned: ${churnedCount} (${churnedPct}%)`}
+            />
+          )}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-2.5 text-[11px] text-[#5C6862]">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
+            Active ({activeCount})
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#C5A059]" />
+            VIP ({vipCount})
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#BA5D38]" />
+            Prospect Leads ({leadCount})
+          </span>
+          {churnedCount > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-gray-400" />
+              Churned ({churnedCount})
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Control Bar: Search & Filters */}
       <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#0D2218]/10 mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between shadow-xs">
@@ -226,10 +357,16 @@ export const CustomersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0D2218]/6">
-                {filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-[#FAF6F0]/60 transition-colors">
+                {filtered.map((c, idx) => (
+                  <motion.tr
+                    key={c.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18, delay: Math.min(idx * 0.03, 0.3) }}
+                    className="hover:bg-[#FAF6F0]/80 transition-colors group"
+                  >
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#0D2218]">{c.name}</div>
+                      <div className="font-bold text-[#0D2218] group-hover:text-[#BA5D38] transition-colors">{c.name}</div>
                       <div className="text-[11px] text-[#5C6862] flex items-center gap-1 mt-0.5">
                         <Building className="w-3 h-3 text-[#5C6862]" />
                         <span>{c.company}</span>
@@ -239,7 +376,7 @@ export const CustomersPage: React.FC = () => {
                     <td className="py-3.5 px-4 text-[#2D3632]">
                       <div className="flex items-center gap-1.5">
                         <Mail className="w-3 h-3 text-[#5C6862]" />
-                        <span>{c.email}</span>
+                        <span className="font-mono text-xs">{c.email}</span>
                       </div>
                       {c.phone && (
                         <div className="flex items-center gap-1.5 text-[11px] text-[#5C6862] mt-0.5">
@@ -277,21 +414,21 @@ export const CustomersPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleOpenEdit(c)}
-                          className="p-1.5 text-[#5C6862] hover:text-[#0D2218] hover:bg-[#FAF6F0] rounded-lg transition-colors"
+                          className="p-1.5 text-[#5C6862] hover:text-[#0D2218] hover:bg-[#FAF6F0] rounded-lg transition-colors cursor-pointer"
                           title="Edit"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDelete(c.id, c.name)}
-                          className="p-1.5 text-[#5C6862] hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-[#5C6862] hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>

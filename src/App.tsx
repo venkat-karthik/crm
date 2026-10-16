@@ -22,6 +22,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { TicketsPage } from './pages/TicketsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { AIInsightsPage } from './pages/AIInsightsPage';
+import { AutomationsPage } from './pages/AutomationsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { UsersPage } from './pages/UsersPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -129,6 +130,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AIInsightsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/automations"
+            element={
+              <ProtectedRoute>
+                <AutomationsPage />
               </ProtectedRoute>
             }
           />

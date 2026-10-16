@@ -14,8 +14,10 @@ import {
   CheckCircle,
   X,
   User,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
-
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
 export const CallsPage: React.FC = () => {
@@ -141,27 +143,130 @@ export const CallsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Top Stats */}
+      {/* Top Stats with Motion Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs">
-          <span className="text-[11px] font-semibold text-[#5C6862] block">Total Calls</span>
-          <span className="font-serif text-2xl font-bold text-[#0D2218]">{calls.length}</span>
-          <span className="text-[10px] text-[#5C6862] block mt-0.5">Inbound & outbound</span>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          whileHover={{ y: -3 }}
+          className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-[#5C6862]">Total Calls</span>
+              <PhoneCall className="w-3.5 h-3.5 text-[#0D2218]" />
+            </div>
+            <span className="font-serif text-2xl font-bold text-[#0D2218]">{calls.length}</span>
+          </div>
+          <span className="text-[10px] text-[#5C6862] block mt-1">Inbound & outbound</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.04 }}
+          whileHover={{ y: -3 }}
+          className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-[#5C6862]">Completed</span>
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
+            </div>
+            <span className="font-serif text-2xl font-bold text-emerald-800">{completedCalls}</span>
+          </div>
+          <span className="text-[10px] text-emerald-700 block mt-1">Logged conversations</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.08 }}
+          whileHover={{ y: -3 }}
+          className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-[#5C6862]">Scheduled</span>
+              <Clock className="w-3.5 h-3.5 text-[#BA5D38]" />
+            </div>
+            <span className="font-serif text-2xl font-bold text-[#BA5D38]">{scheduledCalls}</span>
+          </div>
+          <span className="text-[10px] text-[#5C6862] block mt-1">Upcoming follow-ups</span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.12 }}
+          whileHover={{ y: -3 }}
+          className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-[#5C6862]">Total Duration</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
+            </div>
+            <span className="font-serif text-2xl font-bold text-[#0D2218]">{totalDuration}m</span>
+          </div>
+          <span className="text-[10px] text-[#5C6862] block mt-1">Voice airtime</span>
+        </motion.div>
+      </div>
+
+      {/* Visual Telephony Inbound vs Outbound Proportion Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs mb-6">
+        <div className="flex items-center justify-between text-xs font-semibold mb-2">
+          <span className="text-[#0D2218] font-bold">Telephony Traffic Volume</span>
+          <span className="text-[#5C6862] text-[11px]">
+            {calls.filter((c) => c.type === 'Inbound').length} inbound · {calls.filter((c) => c.type === 'Outbound').length} outbound
+          </span>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs">
-          <span className="text-[11px] font-semibold text-[#5C6862] block">Completed</span>
-          <span className="font-serif text-2xl font-bold text-emerald-800">{completedCalls}</span>
-          <span className="text-[10px] text-emerald-700 block mt-0.5">Logged conversations</span>
+        <div className="w-full h-2.5 bg-[#FAF6F0] rounded-full overflow-hidden flex border border-[#0D2218]/8">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{
+              width: `${
+                calls.length
+                  ? Math.round((calls.filter((c) => c.type === 'Inbound').length / calls.length) * 100)
+                  : 50
+              }%`,
+            }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="h-full bg-blue-600"
+            title="Inbound Calls"
+          />
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{
+              width: `${
+                calls.length
+                  ? Math.round((calls.filter((c) => c.type === 'Outbound').length / calls.length) * 100)
+                  : 50
+              }%`,
+            }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="h-full bg-emerald-600"
+            title="Outbound Calls"
+          />
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs">
-          <span className="text-[11px] font-semibold text-[#5C6862] block">Scheduled</span>
-          <span className="font-serif text-2xl font-bold text-[#BA5D38]">{scheduledCalls}</span>
-          <span className="text-[10px] text-[#5C6862] block mt-0.5">Upcoming today</span>
-        </div>
-        <div className="bg-white p-4 rounded-2xl border border-[#0D2218]/10 shadow-xs">
-          <span className="text-[11px] font-semibold text-[#5C6862] block">Total Duration</span>
-          <span className="font-serif text-2xl font-bold text-[#0D2218]">{totalDuration}m</span>
-          <span className="text-[10px] text-[#5C6862] block mt-0.5">Voice airtime</span>
+        <div className="flex items-center gap-4 mt-2 text-[10px] text-[#5C6862]">
+          <span className="flex items-center gap-1 font-semibold text-blue-700">
+            <span className="w-2 h-2 rounded-full bg-blue-600" />
+            Inbound (
+            {calls.length
+              ? Math.round((calls.filter((c) => c.type === 'Inbound').length / calls.length) * 100)
+              : 0}
+            %)
+          </span>
+          <span className="flex items-center gap-1 font-semibold text-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
+            Outbound (
+            {calls.length
+              ? Math.round((calls.filter((c) => c.type === 'Outbound').length / calls.length) * 100)
+              : 0}
+            %)
+          </span>
         </div>
       </div>
 
