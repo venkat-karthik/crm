@@ -16,6 +16,7 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
+  Trash2,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -80,6 +81,14 @@ export const CommunicationPage: React.FC = () => {
   const showToast = (message: string, toastType: 'success' | 'warning' | 'error' = 'success') => {
     setToast({ message, type: toastType });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleDeleteComm = (id: string, subject: string) => {
+    if (confirm(`Delete communication record "${subject}"?`)) {
+      db.deleteCommunication(id);
+      loadData();
+      showToast('Communication log removed.', 'success');
+    }
   };
 
   const handleOpenAdd = (defaultType: Communication['type'] = 'Email') => {
@@ -338,16 +347,26 @@ export const CommunicationPage: React.FC = () => {
                   )}
                 </div>
 
-                {c.type === 'Email' && (
+                <div className="flex items-center gap-1.5">
+                  {c.type === 'Email' && (
+                    <button
+                      type="button"
+                      onClick={() => setInspectingEmail(c)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Preview Email</span>
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setInspectingEmail(c)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer"
+                    onClick={() => handleDeleteComm(c.id, c.subject)}
+                    className="p-1 text-[#5C6862] hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                    title="Delete log"
                   >
-                    <Eye className="w-3 h-3" />
-                    <span>Preview Email</span>
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                )}
+                </div>
               </div>
             </div>
           ))

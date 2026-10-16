@@ -688,6 +688,11 @@ export const db = {
     return newComm;
   },
 
+  deleteCommunication(id: string) {
+    const list = getStored<Communication[]>('communications', []).filter((c) => c.id !== id);
+    setStored('communications', list);
+  },
+
   // APPOINTMENTS
   getAppointments(): Appointment[] {
     return getStored<Appointment[]>('appointments', []);

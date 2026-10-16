@@ -21,6 +21,7 @@ import {
   Database,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { db } from '../services/db';
 import { AutomationsFlowDiagram } from '../components/AutomationsFlowDiagram';
 import { motion } from 'framer-motion';
 
@@ -117,6 +118,19 @@ export const AutomationsPage: React.FC = () => {
 
       if (res.ok) {
         const data = await res.json();
+        db.saveLead({
+          id: data.leadId || `lead_${Date.now()}`,
+          name: leadSim.name,
+          email: leadSim.email,
+          phone: leadSim.phone,
+          company: leadSim.company,
+          source: 'Website Contact Form',
+          interest: 'Inbound Website Inquiry',
+          assignedTo: 'Sales Lead',
+          status: 'New Lead',
+          notes: leadSim.message,
+        });
+
         setSimResult({
           type: 'success',
           message: `Success! Automated Lead "${leadSim.name}" was captured and filed into your Leads directory with an alert.`,
@@ -151,6 +165,15 @@ export const AutomationsPage: React.FC = () => {
       });
 
       if (res.ok) {
+        db.saveCommunication({
+          type: 'Email',
+          subject: emailSim.subject,
+          content: emailSim.body,
+          recipient: emailSim.to,
+          author: emailSim.from,
+          relatedCustomer: 'Apex Enterprises',
+        });
+
         setSimResult({
           type: 'success',
           message: `Success! Inbound email from "${emailSim.from}" was ingested and linked directly to your Communication timeline.`,
@@ -185,6 +208,16 @@ export const AutomationsPage: React.FC = () => {
       });
 
       if (res.ok) {
+        db.saveCall({
+          contactName: callSim.contactName || callSim.callerNumber,
+          phone: callSim.callerNumber,
+          type: 'Inbound',
+          status: 'Completed',
+          durationMinutes: Number(callSim.durationMinutes) || 8,
+          assignedEmployee: 'Telephony Gateway',
+          notes: callSim.notes || 'VoIP Inbound automated call log.',
+        });
+
         setSimResult({
           type: 'success',
           message: `Success! Telephony event from "${callSim.callerNumber}" (${callSim.durationMinutes} mins) was logged into your Calls Log.`,
